@@ -6,6 +6,7 @@
 #include "filesystem_controller.h"
 #include "service_manager.h"
 #include "event_system.h"
+#include "config_manager.h"
 
 // 硬件抽象层控制器实例
 GPIOController gpioController;
@@ -15,6 +16,9 @@ FileSystemController fsController;
 
 // 服务管理器实例
 ServiceManager serviceManager;
+
+// 配置管理器实例
+ConfigManager configManager(&fsController);
 
 // 测试服务类
 class TestService : public BaseService {
@@ -98,8 +102,13 @@ void setup() {
         DEBUG_ERROR_PRINT("Failed to initialize File System Controller");
     }
     
-    // 注册测试服务
+    // 注册配置管理器服务
     DEBUG_INFO_PRINT("Registering services...");
+    if (!serviceManager.registerService(&configManager)) {
+        DEBUG_ERROR_PRINT("Failed to register ConfigManager");
+    }
+    
+    // 注册测试服务
     if (!serviceManager.registerService(&testService)) {
         DEBUG_ERROR_PRINT("Failed to register TestService");
     }
@@ -111,7 +120,17 @@ void setup() {
     }
     
     // 发布系统启动事件
+    // 发布系统启动事件
     PUBLISH_EVENT(EVENT_SYSTEM_STARTUP, "Main", "System started successfully");
+    
+    // 打印配置信息
+    if (configManager.isConfigLoaded()) {
+        configManager.printConfigSummary();
+        DEBUG_INFO_PRINT("Device Role: %s",
+            (GET_DEVICE_ROLE() == ROLE_MASTER) ? "Master" : "Slave");
+        DEBUG_INFO_PRINT("Device ID: %s", GET_DEVICE_ID().c_str());
+        DEBUG_INFO_PRINT("Hostname: %s", GET_HOSTNAME().c_str());
+    }
     
     DEBUG_INFO_PRINT("Hardware Abstraction Layer initialized");
     DEBUG_INFO_PRINT("WiFly485 Started Successfully");
