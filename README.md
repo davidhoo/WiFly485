@@ -13,12 +13,16 @@
 
 ## 🏗️ 系统架构
 
+系统采用明确的主从架构，两个设备角色固定：
+
 ```mermaid
 graph LR
-    A[VRF控制器] -->|RS485| B[服务端模式<br>ESP8266]
-    B -->|WiFi| C[路由器]
-    C -->|WiFi| D[客户端模式<br>ESP8266]
-    D -->|RS485| E[新风系统]
+    A[VRF控制器] <-->|RS485| B[主设备<br>WiFly485_Master]
+    C[从设备<br>WiFly485_Slave] <-->|RS485| D[新风系统]
+    B <-->|TCP 8888<br>半双工数据| C
+    
+    E[路由器] <-->|WiFi/mDNS| B
+    E <-->|WiFi/mDNS| C
 ```
 
 ## 📋 硬件需求
