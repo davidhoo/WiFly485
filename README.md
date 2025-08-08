@@ -63,7 +63,7 @@ pio run -e esp12e_client --target upload
 
 ### 4. 配置网络
 
-1. 设备上电后自动启动WiFi热点：`RS485_Repeater_XXXX`
+1. 设备上电后自动启动WiFi热点：`WiFly485_Repeater_XXXX`
 2. 连接热点后访问：`192.168.4.1`
 3. 通过Web界面配置WiFi参数
 4. 配置完成后自动重启并连接路由器
