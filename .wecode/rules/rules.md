@@ -70,12 +70,11 @@
      gh pr merge --auto --squash
      
      # 合并后立即删除分支
-     gh pr merge --squash --delete-branch
+     #gh pr merge --squash --delete-branch
      
      # 完整流程示例
      gh pr create --title "feat: 新功能" --body "功能描述" && \
-     gh pr merge --squash --delete-branch
-     ```
+     gh pr merge --squash
    - 特殊字符处理：
      - 避免在命令行直接使用引号、反斜杠等特殊字符
      - 使用单引号包裹复杂字符串，或使用 heredoc 语法
