@@ -7,6 +7,7 @@
 #include "service_manager.h"
 #include "event_system.h"
 #include "config_manager.h"
+#include "led_indicator.h"
 
 // 硬件抽象层控制器实例
 GPIOController gpioController;
@@ -19,6 +20,9 @@ ServiceManager serviceManager;
 
 // 配置管理器实例
 ConfigManager configManager(&fsController);
+
+// LED指示器实例
+LEDIndicator ledIndicator(&gpioController);
 
 // 测试服务类
 class TestService : public BaseService {
@@ -102,6 +106,15 @@ void setup() {
         DEBUG_ERROR_PRINT("Failed to initialize File System Controller");
     }
     
+    // 初始化LED指示器
+    DEBUG_INFO_PRINT("Initializing LED Indicator...");
+    if (!ledIndicator.initialize()) {
+        DEBUG_ERROR_PRINT("Failed to initialize LED Indicator");
+    } else {
+        // 设置启动状态
+        ledIndicator.blinkFast();
+    }
+    
     // 注册配置管理器服务
     DEBUG_INFO_PRINT("Registering services...");
     if (!serviceManager.registerService(&configManager)) {
@@ -122,6 +135,24 @@ void setup() {
     // 发布系统启动事件
     // 发布系统启动事件
     PUBLISH_EVENT(EVENT_SYSTEM_STARTUP, "Main", "System started successfully");
+    
+    // 监听WiFi连接事件
+    LISTEN_EVENT(EVENT_WIFI_CONNECTED, "Main", [](const EventData& event) {
+        DEBUG_INFO_PRINT("WiFi connected, setting LED to normal state");
+        ledIndicator.turnOn(); // WiFi连接成功，常亮
+    });
+    
+    // 监听WiFi断开事件
+    LISTEN_EVENT(EVENT_WIFI_DISCONNECTED, "Main", [](const EventData& event) {
+        DEBUG_INFO_PRINT("WiFi disconnected, setting LED to slow blink");
+        ledIndicator.blinkSlow(); // WiFi断开，慢闪烁
+    });
+    
+    // 监听错误事件
+    LISTEN_EVENT(EVENT_ERROR_OCCURRED, "Main", [](const EventData& event) {
+        DEBUG_ERROR_PRINT("Error occurred: %s, setting LED to error state", event.message.c_str());
+        ledIndicator.setErrorState(); // 发生错误，快速闪烁
+    });
     
     // 打印配置信息
     if (configManager.isConfigLoaded()) {
@@ -145,6 +176,9 @@ void loop() {
     
     // 更新WiFi控制器状态
     wifiController.update();
+    
+    // 更新LED指示器
+    ledIndicator.update();
     
     // 定期打印系统状态
     static unsigned long lastStatusPrint = 0;

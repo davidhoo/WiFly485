@@ -63,4 +63,14 @@ public:
     virtual void format() = 0;
 };
 
+// LED指示器接口
+class ILEDIndicator {
+public:
+    virtual ~ILEDIndicator() = default;
+    virtual bool initialize() = 0;
+    virtual void setState(uint8_t state) = 0;
+    virtual uint8_t getState() const = 0;
+    virtual void update() = 0;
+};
+
 #endif
