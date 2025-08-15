@@ -51,9 +51,29 @@ void loop() {
     ledIndicator.blinkFast();
     delay(5000);
     
-    DEBUG_INFO_PRINT("Testing LED_STATE_ERROR (Error State)");
-    ledIndicator.setErrorState();
+    DEBUG_INFO_PRINT("Testing LED_STATE_BLINK_ULTRA_FAST (Ultra Fast Blink - Hotspot Wait)");
+    ledIndicator.blinkHotspotWait();
     delay(5000);
+    
+    DEBUG_INFO_PRINT("Testing LED_STATE_BLINK_NORMAL_2HZ (Normal Blink 2Hz - WiFi Connecting)");
+    ledIndicator.blinkWiFiConnecting();
+    delay(5000);
+    
+    DEBUG_INFO_PRINT("Testing LED_STATE_BLINK_NORMAL_3HZ (Normal Blink 3Hz - Master/Slave Connecting)");
+    ledIndicator.blinkMasterSlaveConnecting();
+    delay(5000);
+    
+    DEBUG_INFO_PRINT("Testing LED_STATE_BREATHE (Breathe Mode - Data Transfer)");
+    // 呼吸模式需要更长时间来观察效果
+    delay(5000);
+    
+    DEBUG_INFO_PRINT("Testing LED_STATE_ERROR (Error State - Double Flash)");
+    ledIndicator.setErrorState();
+    delay(8000); // 错误状态需要更长时间来观察双闪模式
+    
+    DEBUG_INFO_PRINT("Testing LED_STATE_BLINK_VERY_SLOW (Very Slow Blink - Config Mode)");
+    ledIndicator.blinkConfigMode();
+    delay(8000); // 超慢闪烁需要更长时间来观察效果
     
     DEBUG_INFO_PRINT("Testing Priority System");
     

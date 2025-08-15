@@ -7,16 +7,20 @@ LED指示器模块为WiFly485系统提供了直观的设备状态指示功能。
 ## LED状态定义
 
 ### 基本状态
+### 基本状态
 
 | 状态 | 枚举值 | 描述 | 显示模式 |
 |------|--------|------|----------|
 | LED_STATE_OFF | 0 | LED关闭 | 熄灭 |
 | LED_STATE_ON | 1 | LED常亮 | 持续点亮 |
-| LED_STATE_BLINK_SLOW | 2 | 慢闪烁 | 1秒间隔闪烁 |
-| LED_STATE_BLINK_FAST | 3 | 快闪烁 | 200毫秒间隔闪烁 |
-| LED_STATE_BREATHE | 4 | 呼吸效果 | 渐变亮灭（淡入淡出） |
-| LED_STATE_ERROR | 5 | 错误状态 | 100毫秒间隔快速闪烁 |
-
+| LED_STATE_BLINK_SLOW | 2 | 慢闪烁 | 500毫秒间隔闪烁（1Hz） |
+| LED_STATE_BLINK_NORMAL_2HZ | 3 | 中等闪烁 | 250毫秒间隔闪烁（2Hz） |
+| LED_STATE_BLINK_NORMAL_3HZ | 4 | 中等闪烁 | 167毫秒间隔闪烁（3Hz） |
+| LED_STATE_BLINK_FAST | 5 | 快闪烁 | 100毫秒间隔闪烁（5Hz） |
+| LED_STATE_BLINK_ULTRA_FAST | 6 | 超快速闪烁 | 50毫秒间隔闪烁（10Hz） |
+| LED_STATE_BREATHE | 7 | 呼吸效果 | 渐变亮灭（淡入淡出，2Hz） |
+| LED_STATE_ERROR | 8 | 错误状态 | 双闪模式（短闪200ms+间隔200ms+长闪500ms+间隔1100ms） |
+| LED_STATE_BLINK_VERY_SLOW | 9 | 超慢闪烁 | 1667毫秒间隔闪烁（0.3Hz） |
 ### 状态优先级
 
 LED指示器支持状态优先级机制，确保重要的状态信息能够及时显示：
@@ -58,11 +62,16 @@ ledIndicator.setState(LED_STATE_ON);
 ledIndicator.setStateWithPriority(LED_STATE_BLINK_FAST, LED_PRIORITY_HIGH);
 
 // 便捷方法
-ledIndicator.turnOn();        // 常亮
-ledIndicator.turnOff();       // 熄灭
-ledIndicator.blinkSlow();     // 慢闪烁
-ledIndicator.blinkFast();     // 快闪烁
-ledIndicator.setErrorState(); // 错误状态
+ledIndicator.turnOn();                   // 常亮
+ledIndicator.turnOff();                  // 熄灭
+ledIndicator.blinkSlow();                // 慢闪烁 (1Hz)
+ledIndicator.blinkFast();                // 快闪烁 (5Hz)
+ledIndicator.setErrorState();            // 错误状态 (双闪模式)
+ledIndicator.blinkHotspotWait();         // 热点等待 (10Hz超快速闪烁)
+ledIndicator.blinkWiFiConnecting();      // WiFi连接中 (2Hz中等闪烁)
+ledIndicator.blinkMasterSlaveConnecting(); // 主从连接中 (3Hz中等闪烁)
+ledIndicator.blinkConfigSync();          // 配置同步 (1Hz慢速闪烁)
+ledIndicator.blinkConfigMode();          // 配置模式 (0.3Hz超慢闪烁)
 ```
 
 ### 在主循环中更新
@@ -82,10 +91,16 @@ void loop() {
 
 | 系统状态 | LED状态 | 描述 |
 |----------|---------|------|
-| 系统启动中 | 快闪烁 | 设备正在初始化 |
+| 系统启动中 | 快速闪烁 (5Hz) | 设备正在初始化 |
+| 热点等待 | 超快速闪烁 (10Hz) | WiFi热点已启动，等待客户端连接 |
+| WiFi连接中 | 中等闪烁 (2Hz) | 正在连接WiFi网络 |
+| 主从连接中 | 中等闪烁 (3Hz) | 从设备正在寻找主设备 |
 | WiFi连接成功 | 常亮 | 网络连接正常 |
-| WiFi连接断开 | 慢闪烁 | 网络连接异常 |
-| 发生错误 | 快速闪烁 | 设备出现错误 |
+| WiFi连接断开 | 慢闪烁 (1Hz) | 网络连接异常 |
+| 配置同步中 | 慢闪烁 (1Hz) | 正在与对端设备同步配置参数 |
+| 数据传输中 | 呼吸模式 (2Hz) | RS485有数据收发 |
+| 配置模式 | 超慢闪烁 (0.3Hz) | 处于Web配置模式 |
+| 发生错误 | 双闪模式 | 设备出现错误 |
 | 正常运行 | 常亮 | 设备运行正常 |
 
 ## 优先级规则

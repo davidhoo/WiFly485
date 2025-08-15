@@ -102,7 +102,11 @@ void LEDIndicator::update() {
             break;
             
         case LED_STATE_BLINK_SLOW:
+        case LED_STATE_BLINK_NORMAL_2HZ:
+        case LED_STATE_BLINK_NORMAL_3HZ:
         case LED_STATE_BLINK_FAST:
+        case LED_STATE_BLINK_ULTRA_FAST:
+        case LED_STATE_BLINK_VERY_SLOW:
         case LED_STATE_ERROR:
             updateBlinkState();
             break;
@@ -129,7 +133,11 @@ void LEDIndicator::applyState(LEDState state) {
             break;
             
         case LED_STATE_BLINK_SLOW:
+        case LED_STATE_BLINK_NORMAL_2HZ:
+        case LED_STATE_BLINK_NORMAL_3HZ:
         case LED_STATE_BLINK_FAST:
+        case LED_STATE_BLINK_ULTRA_FAST:
+        case LED_STATE_BLINK_VERY_SLOW:
         case LED_STATE_ERROR:
             // 初始化闪烁状态
             lastBlinkTime = millis();
@@ -152,29 +160,76 @@ void LEDIndicator::applyState(LEDState state) {
 
 void LEDIndicator::updateBlinkState() {
     unsigned long currentTime = millis();
-    unsigned long interval = 0;
     
     // 根据状态确定闪烁间隔
     switch (currentState.state) {
         case LED_STATE_BLINK_SLOW:
-            interval = 1000; // 1秒间隔
+            // 慢速闪烁 (1Hz)
+            if (currentTime - lastBlinkTime >= 500) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
             break;
+            
+        case LED_STATE_BLINK_NORMAL_2HZ:
+            // 中等闪烁 (2Hz)
+            if (currentTime - lastBlinkTime >= 250) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
+            break;
+            
+        case LED_STATE_BLINK_NORMAL_3HZ:
+            // 中等闪烁 (3Hz)
+            if (currentTime - lastBlinkTime >= 167) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
+            break;
+            
         case LED_STATE_BLINK_FAST:
-            interval = 200;  // 200毫秒间隔
+            // 快速闪烁 (5Hz)
+            if (currentTime - lastBlinkTime >= 100) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
             break;
+            
+        case LED_STATE_BLINK_ULTRA_FAST:
+            // 超快速闪烁 (10Hz)
+            if (currentTime - lastBlinkTime >= 50) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
+            break;
+            
         case LED_STATE_ERROR:
-            interval = 100;  // 100毫秒间隔
+            // 错误状态（双闪模式）
+            updateErrorState();
             break;
+            
+        case LED_STATE_BLINK_VERY_SLOW:
+            // 超慢闪烁 (0.3Hz)
+            if (currentTime - lastBlinkTime >= 1667) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
+            break;
+            
         default:
-            interval = 500;  // 默认500毫秒间隔
+            // 默认处理
+            if (currentTime - lastBlinkTime >= 500) {
+                blinkState = !blinkState;
+                gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
+                lastBlinkTime = currentTime;
+            }
             break;
-    }
-    
-    // 检查是否需要切换状态
-    if (currentTime - lastBlinkTime >= interval) {
-        blinkState = !blinkState;
-        gpioController->digitalWrite(ledPin, blinkState ? HIGH : LOW);
-        lastBlinkTime = currentTime;
     }
 }
 
@@ -200,7 +255,58 @@ void LEDIndicator::updateBreathState() {
         lastBreathTime = currentTime;
     }
 }
+void LEDIndicator::updateErrorState() {
+    unsigned long currentTime = millis();
+    static unsigned long errorStateStartTime = 0;
+    static int errorSubState = 0; // 0: 短闪, 1: 间隔, 2: 长闪, 3: 间隔
+    static unsigned long errorSubStateStartTime = 0;
+    
+    // 初始化错误状态
+    if (errorStateStartTime == 0) {
+        errorStateStartTime = currentTime;
+        errorSubState = 0;
+        errorSubStateStartTime = currentTime;
+        this->gpioController->digitalWrite(this->ledPin, HIGH); // 开始短闪
+    }
+    
+    switch (errorSubState) {
+        case 0: // 短闪200ms
+            if (currentTime - errorSubStateStartTime >= 200) {
+                this->gpioController->digitalWrite(this->ledPin, LOW);
+                errorSubState = 1;
+                errorSubStateStartTime = currentTime;
+            }
+            break;
+            
+        case 1: // 间隔200ms
+            if (currentTime - errorSubStateStartTime >= 200) {
+                errorSubState = 2;
+                errorSubStateStartTime = currentTime;
+            }
+            break;
+            
+        case 2: // 长闪500ms
+            if (errorSubStateStartTime == currentTime) {
+                this->gpioController->digitalWrite(this->ledPin, HIGH); // 开始长闪
+            }
+            if (currentTime - errorSubStateStartTime >= 500) {
+                this->gpioController->digitalWrite(this->ledPin, LOW);
+                errorSubState = 3;
+                errorSubStateStartTime = currentTime;
+            }
+            break;
+            
+        case 3: // 间隔1100ms
+            if (currentTime - errorSubStateStartTime >= 1100) {
+                errorSubState = 0; // 重新开始循环
+                errorSubStateStartTime = currentTime;
+                errorStateStartTime = 0; // 重置状态机
+            }
+            break;
+    }
+}
 
+// 便捷方法实现
 // 便捷方法实现
 void LEDIndicator::turnOn() {
     setStateWithPriority(LED_STATE_ON, LED_PRIORITY_NORMAL);
@@ -209,7 +315,6 @@ void LEDIndicator::turnOn() {
 void LEDIndicator::turnOff() {
     setStateWithPriority(LED_STATE_OFF, LED_PRIORITY_LOW);
 }
-
 void LEDIndicator::blinkSlow() {
     setStateWithPriority(LED_STATE_BLINK_SLOW, LED_PRIORITY_NORMAL);
 }
@@ -220,4 +325,24 @@ void LEDIndicator::blinkFast() {
 
 void LEDIndicator::setErrorState() {
     setStateWithPriority(LED_STATE_ERROR, LED_PRIORITY_CRITICAL);
+}
+
+void LEDIndicator::blinkHotspotWait() {
+    this->setStateWithPriority(LED_STATE_BLINK_ULTRA_FAST, LED_PRIORITY_HIGH);
+}
+
+void LEDIndicator::blinkWiFiConnecting() {
+    this->setStateWithPriority(LED_STATE_BLINK_NORMAL_2HZ, LED_PRIORITY_NORMAL);
+}
+
+void LEDIndicator::blinkMasterSlaveConnecting() {
+    this->setStateWithPriority(LED_STATE_BLINK_NORMAL_3HZ, LED_PRIORITY_NORMAL);
+}
+
+void LEDIndicator::blinkConfigSync() {
+    this->setStateWithPriority(LED_STATE_BLINK_SLOW, LED_PRIORITY_NORMAL);
+}
+
+void LEDIndicator::blinkConfigMode() {
+    this->setStateWithPriority(LED_STATE_BLINK_VERY_SLOW, LED_PRIORITY_LOW);
 }

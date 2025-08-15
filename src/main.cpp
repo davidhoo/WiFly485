@@ -111,7 +111,7 @@ void setup() {
     if (!ledIndicator.initialize()) {
         DEBUG_ERROR_PRINT("Failed to initialize LED Indicator");
     } else {
-        // 设置启动状态
+        // 设置启动状态（快速闪烁5Hz）
         ledIndicator.blinkFast();
     }
     
