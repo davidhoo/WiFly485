@@ -1,0 +1,22 @@
+{
+  "network": {
+    "ssid": "WiFly485_Network",
+    "password": "default_password",
+    "dhcpEnabled": true,
+    "ip": "192.168.1.100",
+    "gateway": "192.168.1.1",
+    "subnet": "255.255.255.0"
+  },
+  "rs485": {
+    "baudRate": 9600,
+    "dataBits": 8,
+    "parity": 0,
+    "stopBits": 1
+  },
+  "device": {
+    "name": "WiFly485_Device",
+    "role": "unknown",
+    "tcpPort": 8888,
+    "syncPort": 8889
+  }
+}
