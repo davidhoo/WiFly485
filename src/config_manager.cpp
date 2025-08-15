@@ -218,7 +218,7 @@ bool ConfigManager::restoreFromBackup() {
 }
 
 bool ConfigManager::exportConfig(String& jsonString) {
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     
     if (!configToJson(currentConfig, doc)) {
         DEBUG_ERROR_PRINT("ConfigManager: Failed to convert config to JSON");
@@ -234,7 +234,7 @@ bool ConfigManager::exportConfig(String& jsonString) {
 }
 
 bool ConfigManager::importConfig(const String& jsonString) {
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     
     DeserializationError error = deserializeJson(doc, jsonString);
     if (error) {
@@ -266,13 +266,13 @@ bool ConfigManager::importConfig(const String& jsonString) {
 
 bool ConfigManager::configToJson(const SystemConfig& config, JsonDocument& doc) {
     // 设备配置
-    JsonObject device = doc.createNestedObject("device");
+    JsonObject device = doc["device"].to<JsonObject>();
     device["role"] = (config.device.role == ROLE_MASTER) ? "master" : "slave";
     device["device_id"] = config.device.device_id;
     device["device_name"] = config.device.device_name;
     
     // 网络配置
-    JsonObject network = doc.createNestedObject("network");
+    JsonObject network = doc["network"].to<JsonObject>();
     network["ssid"] = config.network.ssid;
     network["password"] = config.network.password;
     network["hostname"] = config.network.hostname;
@@ -286,7 +286,7 @@ bool ConfigManager::configToJson(const SystemConfig& config, JsonDocument& doc) 
     }
     
     // RS485配置
-    JsonObject rs485 = doc.createNestedObject("rs485");
+    JsonObject rs485 = doc["rs485"].to<JsonObject>();
     rs485["baud_rate"] = config.rs485.baud_rate;
     rs485["data_bits"] = config.rs485.data_bits;
     rs485["stop_bits"] = config.rs485.stop_bits;
@@ -294,7 +294,7 @@ bool ConfigManager::configToJson(const SystemConfig& config, JsonDocument& doc) 
     rs485["direction_pin"] = config.rs485.direction_pin;
     
     // 通信配置
-    JsonObject communication = doc.createNestedObject("communication");
+    JsonObject communication = doc["communication"].to<JsonObject>();
     communication["data_port"] = config.communication.data_port;
     communication["sync_port"] = config.communication.sync_port;
     communication["auto_push"] = config.communication.auto_push;
@@ -302,7 +302,7 @@ bool ConfigManager::configToJson(const SystemConfig& config, JsonDocument& doc) 
     communication["sync_interval"] = config.communication.sync_interval;
     
     // 心跳配置
-    JsonObject heartbeat = doc.createNestedObject("heartbeat");
+    JsonObject heartbeat = doc["heartbeat"].to<JsonObject>();
     heartbeat["interval"] = config.heartbeat.interval;
     heartbeat["timeout"] = config.heartbeat.timeout;
     heartbeat["max_retries"] = config.heartbeat.max_retries;
@@ -316,8 +316,8 @@ bool ConfigManager::configToJson(const SystemConfig& config, JsonDocument& doc) 
 
 bool ConfigManager::jsonToConfig(const JsonDocument& doc, SystemConfig& config) {
     // 设备配置
-    if (doc.containsKey("device")) {
-        JsonObject device = doc["device"];
+    if (doc["device"].is<JsonObject>()) {
+        JsonObjectConst device = doc["device"];
         String role = device["role"] | "";
         config.device.role = (role == "master") ? ROLE_MASTER : ROLE_SLAVE;
         config.device.device_id = device["device_id"] | generateDeviceId();
@@ -325,8 +325,8 @@ bool ConfigManager::jsonToConfig(const JsonDocument& doc, SystemConfig& config) 
     }
     
     // 网络配置
-    if (doc.containsKey("network")) {
-        JsonObject network = doc["network"];
+    if (doc["network"].is<JsonObject>()) {
+        JsonObjectConst network = doc["network"];
         config.network.ssid = network["ssid"] | "";
         config.network.password = network["password"] | "";
         config.network.hostname = network["hostname"] | generateHostname(config.device.role, config.device.device_id);
@@ -339,8 +339,8 @@ bool ConfigManager::jsonToConfig(const JsonDocument& doc, SystemConfig& config) 
     }
     
     // RS485配置
-    if (doc.containsKey("rs485")) {
-        JsonObject rs485 = doc["rs485"];
+    if (doc["rs485"].is<JsonObject>()) {
+        JsonObjectConst rs485 = doc["rs485"];
         config.rs485.baud_rate = rs485["baud_rate"] | 9600;
         config.rs485.data_bits = rs485["data_bits"] | 8;
         config.rs485.stop_bits = rs485["stop_bits"] | 1;
@@ -349,8 +349,8 @@ bool ConfigManager::jsonToConfig(const JsonDocument& doc, SystemConfig& config) 
     }
     
     // 通信配置
-    if (doc.containsKey("communication")) {
-        JsonObject communication = doc["communication"];
+    if (doc["communication"].is<JsonObject>()) {
+        JsonObjectConst communication = doc["communication"];
         config.communication.data_port = communication["data_port"] | 8888;
         config.communication.sync_port = communication["sync_port"] | 8889;
         config.communication.auto_push = communication["auto_push"] | (config.device.role == ROLE_MASTER);
@@ -359,8 +359,8 @@ bool ConfigManager::jsonToConfig(const JsonDocument& doc, SystemConfig& config) 
     }
     
     // 心跳配置
-    if (doc.containsKey("heartbeat")) {
-        JsonObject heartbeat = doc["heartbeat"];
+    if (doc["heartbeat"].is<JsonObject>()) {
+        JsonObjectConst heartbeat = doc["heartbeat"];
         config.heartbeat.interval = heartbeat["interval"] | 5000;
         config.heartbeat.timeout = heartbeat["timeout"] | 15000;
         config.heartbeat.max_retries = heartbeat["max_retries"] | 10;
@@ -565,7 +565,7 @@ bool ConfigManager::syncFromMaster(const String& masterConfigJson) {
     }
     
     // 解析主设备配置
-    DynamicJsonDocument doc(2048);
+    JsonDocument doc;
     DeserializationError error = deserializeJson(doc, masterConfigJson);
     if (error) {
         DEBUG_ERROR_PRINT("ConfigManager: Failed to parse master config JSON: %s", error.c_str());
@@ -620,7 +620,7 @@ bool ConfigManager::isConfigSyncNeeded(const String& masterConfigJson) {
     }
     
     // 解析主设备配置
-    DynamicJsonDocument masterDoc(2048);
+    JsonDocument masterDoc;
     DeserializationError error = deserializeJson(masterDoc, masterConfigJson);
     if (error) {
         DEBUG_ERROR_PRINT("ConfigManager: Failed to parse master config for comparison");
@@ -628,7 +628,7 @@ bool ConfigManager::isConfigSyncNeeded(const String& masterConfigJson) {
     }
     
     // 导出当前配置
-    DynamicJsonDocument currentDoc(2048);
+    JsonDocument currentDoc;
     if (!configToJson(currentConfig, currentDoc)) {
         DEBUG_ERROR_PRINT("ConfigManager: Failed to export current config for comparison");
         return false;
