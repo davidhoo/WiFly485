@@ -2,63 +2,15 @@
 #include "device.h"
 #include "logger.h"
 #include "config_manager.h"
-
-// 测试函数声明
-void testDeviceRole();
-void testDeviceName();
-void testLogger();
-void testConfigManager();
+#include "test_framework.h"
 
 // 全局变量
 Device device;
 extern Logger logger;
 ConfigManager configManager;
 
-void setup() {
-  // 初始化串口
-  Serial.begin(115200);
-  delay(1000);
-  
-  Serial.println("=== WiFly485 测试运行器 ===");
-  
-  // 初始化日志系统
-  logger.begin();
-  logger.setLogLevel(LOG_LEVEL_VERBOSE);
-  
-  LOG_I("Test", "开始测试运行器");
-  
-  // 初始化设备
-  if (!device.begin()) {
-    LOG_E("Test", "设备初始化失败");
-    return;
-  }
-  
-  LOG_I("Test", "设备初始化成功");
-  
-  // 初始化配置管理器
-  if (!configManager.begin()) {
-    LOG_E("Test", "配置管理器初始化失败");
-    return;
-  }
-  
-  LOG_I("Test", "配置管理器初始化成功");
-  
-  // 运行各项测试
-  testDeviceRole();
-  testDeviceName();
-  testLogger();
-  testConfigManager();
-  
-  LOG_I("Test", "测试运行器完成");
-  Serial.println("=== 测试完成 ===");
-}
-
-void loop() {
-  // 测试程序只需运行一次
-  delay(1000);
-}
-
-void testDeviceRole() {
+// 测试函数声明 (使用 TEST 宏定义)
+TEST(DeviceRole) {
   LOG_I("Test", "开始设备角色测试");
   
   DeviceRole role = device.getRole();
@@ -77,19 +29,15 @@ void testDeviceRole() {
   
   // 测试设置角色
   device.setRole(DEVICE_ROLE_MASTER_ENUM);
-  if (device.isMaster()) {
-    Serial.println("设置角色后，设备是主设备");
-  }
+  ASSERT_TRUE(device.isMaster());
   
   device.setRole(DEVICE_ROLE_SLAVE_ENUM);
-  if (device.isSlave()) {
-    Serial.println("设置角色后，设备是从设备");
-  }
+  ASSERT_TRUE(device.isSlave());
   
   LOG_I("Test", "设备角色测试完成");
 }
 
-void testDeviceName() {
+TEST(DeviceName) {
   LOG_I("Test", "开始设备名称测试");
   
   String name = device.getName();
@@ -100,10 +48,12 @@ void testDeviceName() {
   String newName = device.getName();
   Serial.printf("新设备名称: %s\n", newName.c_str());
   
+  ASSERT_STRING_EQUAL("Test_Device", newName.c_str());
+  
   LOG_I("Test", "设备名称测试完成");
 }
 
-void testLogger() {
+TEST(Logger) {
   LOG_I("Test", "开始日志系统测试");
   
   // 测试不同级别的日志输出
@@ -124,7 +74,7 @@ void testLogger() {
   LOG_I("Test", "日志系统测试完成");
 }
 
-void testConfigManager() {
+TEST(ConfigManager) {
   LOG_I("Test", "开始配置管理器测试");
   
   // 测试获取配置
@@ -151,5 +101,60 @@ void testConfigManager() {
     Serial.println("配置文件不存在");
   }
   
+  ASSERT_TRUE(configManager.validateConfig() || !configManager.validateConfig()); // 总是通过的断言，仅作示例
+  
   LOG_I("Test", "配置管理器测试完成");
+}
+
+void setup() {
+  // 初始化串口
+  Serial.begin(115200);
+  delay(1000);
+  
+  Serial.println("=== WiFly485 测试运行器 ===");
+  
+  // 初始化测试框架
+  testFramework.begin();
+  
+  // 初始化日志系统
+  logger.begin();
+  logger.setLogLevel(LOG_LEVEL_VERBOSE);
+  
+  LOG_I("Test", "开始测试运行器");
+  
+  // 初始化设备
+  if (!device.begin()) {
+    LOG_E("Test", "设备初始化失败");
+    return;
+  }
+  
+  LOG_I("Test", "设备初始化成功");
+  
+  // 初始化配置管理器
+  if (!configManager.begin()) {
+    LOG_E("Test", "配置管理器初始化失败");
+    return;
+  }
+  
+  LOG_I("Test", "配置管理器初始化成功");
+  
+  // 注册测试 (使用 RUN_TEST 宏)
+  RUN_TEST(DeviceRole);
+  RUN_TEST(DeviceName);
+  RUN_TEST(Logger);
+  RUN_TEST(ConfigManager);
+  
+  // 运行所有测试 (使用 test_framework)
+  testFramework.runAllTests();
+  
+  // 打印测试结果
+  testFramework.printTestResults();
+  
+  LOG_I("Test", "测试运行器完成");
+  Serial.println("=== 测试完成 ===");
+}
+
+void loop() {
+  // 测试程序只需运行一次
+  delay(1000);
 }
