@@ -164,6 +164,11 @@ void setup() {
   
   LOG_I("Test", "测试运行器初始化完成");
   Serial.println("=== 测试运行器初始化完成 ===");
+  
+  // 清空串口缓冲区，避免初始化信息被当作用户输入
+  while (Serial.available() > 0) {
+    Serial.read();
+  }
 }
 
 // 运行选定的测试
