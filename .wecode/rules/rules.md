@@ -64,17 +64,16 @@
      EOF
      )"
      ```
-   - 自动合并和清理：
+   - 自动合并：
      ```bash
      # 启用自动合并（当满足合并条件时）
      gh pr merge --auto --squash
      
-     # 合并后立即删除分支
-     gh pr merge --squash --delete-branch
+   
      
      # 完整流程示例
      gh pr create --title "feat: 新功能" --body "功能描述" && \
-     gh pr merge --squash --delete-branch
+     gh pr merge --squash
      ```
    - 特殊字符处理：
      - 避免在命令行直接使用引号、反斜杠等特殊字符
