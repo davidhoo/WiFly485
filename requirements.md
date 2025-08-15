@@ -212,7 +212,7 @@ graph TD
     "ssid": "WiFi名称",
     "password": "WiFi密码",
     "ip_mode": "dhcp",
-    "hostname": "wifly485-master-XXXX|wifly485-slave-XXXX"
+    "hostname": "wifly485-master|wifly485-slave"
   },
   "rs485": {
     "baud_rate": 9600,
@@ -279,9 +279,9 @@ stateDiagram-v2
    - 初始化RS485模块
 
 2. **WiFi热点模式**（最长60秒等待）
-   - 启动AP模式：`WiFly485_Master_XXXX`
+   - 启动AP模式：`WiFly485_Master`
    - 启动Web服务器：`192.168.4.1`
-   - 启动mDNS服务：`wifly485-master-XXXX.local`
+   - 启动mDNS服务：`wifly485-master.local`
 
 3. **配置模式**（如需要）
    - 提供Web配置界面
@@ -301,9 +301,9 @@ stateDiagram-v2
    - 初始化RS485模块
 
 2. **WiFi热点模式**（最长60秒等待）
-   - 启动AP模式：`WiFly485_Slave_XXXX`
-   - 启动Web服务器：`192.168.4.1`
-   - 启动mDNS服务：`wifly485-slave-XXXX.local`
+   - 启动AP模式：`WiFly485_Slave`
+   - 启动Web服务器：`192.168.5.1`
+   - 启动mDNS服务：`wifly485-slave.local`
 
 3. **配置模式**（如需要）
    - 提供Web配置界面（仅网络参数）
@@ -464,18 +464,18 @@ sequenceDiagram
 
 ### 10.1 PlatformIO配置
 ```ini
-[env:esp12e_master]
+[env:wifly485_master]
 platform = espressif8266
 board = esp12e
 framework = arduino
-lib_deps = 
+lib_deps =
     ESP8266mDNS
     ESP8266WebServer
 build_flags =
     -DDEVICE_ROLE_MASTER
     -DDEVICE_NAME="WiFly485_Master"
 
-[env:esp12e_slave]
+[env:wifly485_slave]
 platform = espressif8266
 board = esp12e
 framework = arduino
@@ -506,22 +506,22 @@ build_flags =
 1. **烧录固件**：
    ```bash
    # 编译主设备
-   pio run -e esp12e_master
+   pio run -e wifly485_master
    
    # 编译从设备
-   pio run -e esp12e_slave
+   pio run -e wifly485_slave
    ```
 
 2. **主设备配置**：
-   - 上电启动，等待热点`WiFly485_Master_XXXX`
+   - 上电启动，等待热点`WiFly485_Master`
    - 连接热点，访问`192.168.4.1`
    - 配置WiFi网络参数
    - 配置RS485参数
    - 保存配置，设备自动重启
 
 3. **从设备配置**：
-   - 上电启动，等待热点`WiFly485_Slave_XXXX`
-   - 连接热点，访问`192.168.4.1`
+   - 上电启动，等待热点`WiFly485_Slave`
+   - 连接热点，访问`192.168.5.1`
    - 配置WiFi网络参数（需与主设备同一网络）
    - 保存配置，设备自动重启
    - 自动发现主设备并同步配置
@@ -584,9 +584,9 @@ build_flags =
 |------|----------|------|
 | **产品名称** | WiFly485 | WiFly485 - RS485 WiFi中继系统 |
 | **设备角色** | WiFly485_Master / WiFly485_Slave | WiFly485_Master, WiFly485_Slave |
-| **WiFi热点** | WiFly485_[角色]_[唯一标识] | WiFly485_Master_A1B2C3, WiFly485_Slave_D4E5F6 |
-| **mDNS域名** | wifly485-[角色]-[唯一标识].local | wifly485-master-a1b2c3.local, wifly485-slave-d4e5f6.local |
-| **主机名** | wifly485-[角色]-[唯一标识] | wifly485-master-a1b2c3, wifly485-slave-d4e5f6 |
+| **WiFi热点** | WiFly485_[角色] | WiFly485_Master, WiFly485_Slave |
+| **mDNS域名** | wifly485-[角色].local | wifly485-master.local, wifly485-slave.local |
+| **主机名** | wifly485-[角色] | wifly485-master, wifly485-slave |
 | **Web界面标题** | WiFly485[角色]设备管理 | WiFly485主设备管理, WiFly485从设备管理 |
 
 ### 14.2 命名规则说明
