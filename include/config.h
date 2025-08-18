@@ -31,4 +31,7 @@
 #define DEFAULT_CONFIG_FILE_PATH "/config.json"
 #define SPIFFS_MAX_SIZE 4096
 
+// LED配置
+#define LED_PIN 2  // GPIO2作为LED引脚
+
 #endif // CONFIG_H

@@ -8,10 +8,10 @@
 #include "tcp_protocol.h"
 #include "config_sync.h"
 #include "web_server.h"
+#include "led_indicator.h"
 
 // 全局变量
 Device device;
-Logger logger;
 ConfigManager configManager;
 WiFiManager wifiManager;
 MDNSService mdnsService;
@@ -19,6 +19,9 @@ RS485 rs485;
 TCPProtocol tcpProtocol;
 ConfigSync configSync;
 WebServer webServer(configManager, device);
+LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
+LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
+LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
 
 void setup()
 {
@@ -95,6 +98,10 @@ void setup()
   webServer.begin();
   LOG_I("Main", "Web服务器初始化成功");
   
+  // 初始化LED指示器
+  ledIndicator.begin();
+  ledIndicator.setState(LEDState::OFF, LEDPriority::PRIORITY_LOW);
+  
   LOG_I("Main", "主程序初始化完成");
   Serial.println("=== 主程序初始化完成 ===");
 }
@@ -115,6 +122,69 @@ void loop()
   
   // 处理Web服务器
   webServer.handleClient();
+  
+  // 根据设备状态更新LED指示器
+  // 根据设备状态更新LED指示器
+  if (device.isMaster()) {
+    // 主设备状态指示
+    if (wifiManager.getConnectionStatus() == WIFI_CONNECTED) {
+      if (tcpProtocol.getConnectionStatus() == TCP_CONNECTED) {
+        // 已连接到从设备
+        if (ledIndicator.getCurrentState() != LEDState::CONNECTED || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::CONNECTED, LEDPriority::PRIORITY_NORMAL);
+        }
+      } else {
+        // WiFi已连接，但未连接到从设备
+        if (ledIndicator.getCurrentState() != LEDState::ON || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::ON, LEDPriority::PRIORITY_NORMAL);
+        }
+      }
+    } else {
+      // WiFi未连接
+      if (wifiManager.getConnectionStatus() == WIFI_CONNECTING) {
+        // 正在连接WiFi
+        if (ledIndicator.getCurrentState() != LEDState::CONNECTING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::CONNECTING, LEDPriority::PRIORITY_NORMAL);
+        }
+      } else {
+        // WiFi连接失败
+        if (ledIndicator.getCurrentState() != LEDState::ERROR || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
+          ledIndicator.setState(LEDState::ERROR, LEDPriority::PRIORITY_HIGH);
+        }
+      }
+    }
+  } else {
+    // 从设备状态指示
+    if (wifiManager.getConnectionStatus() == WIFI_CONNECTED) {
+      if (tcpProtocol.getConnectionStatus() == TCP_CONNECTED) {
+        // 已连接到主设备
+        if (ledIndicator.getCurrentState() != LEDState::CONNECTED || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::CONNECTED, LEDPriority::PRIORITY_NORMAL);
+        }
+      } else {
+        // WiFi已连接，但未连接到主设备
+        if (ledIndicator.getCurrentState() != LEDState::ON || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::ON, LEDPriority::PRIORITY_NORMAL);
+        }
+      }
+    } else {
+      // WiFi未连接
+      if (wifiManager.getConnectionStatus() == WIFI_CONNECTING) {
+        // 正在连接WiFi
+        if (ledIndicator.getCurrentState() != LEDState::CONNECTING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::CONNECTING, LEDPriority::PRIORITY_NORMAL);
+        }
+      } else {
+        // WiFi连接失败
+        if (ledIndicator.getCurrentState() != LEDState::ERROR || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
+          ledIndicator.setState(LEDState::ERROR, LEDPriority::PRIORITY_HIGH);
+        }
+      }
+    }
+  }
+  
+  // 更新LED指示器
+  ledIndicator.update();
   
   // 短暂延迟以避免过度占用CPU
   delay(10);
