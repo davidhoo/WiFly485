@@ -64,6 +64,9 @@ extern void runMDNSTests();
 // RS485测试函数声明
 extern void runRS485Tests();
 
+// TCP协议测试函数声明
+extern void runProtocolTests();
+
 
 // 显示测试菜单
 void showTestMenu() {
@@ -77,6 +80,7 @@ void showTestMenu() {
   Serial.println("5 - WiFi管理器测试");
   Serial.println("6 - mDNS服务测试");
   Serial.println("7 - RS485通信测试");
+  Serial.println("8 - TCP协议测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -182,6 +186,9 @@ void setup() {
   // 注册RS485测试
   testFramework.registerTest(runRS485Tests, "RS485");
   
+  // 注册TCP协议测试
+  testFramework.registerTest(runProtocolTests, "TCPProtocol");
+  
   
   // 显示测试菜单
   showTestMenu();
@@ -221,6 +228,9 @@ void runSelectedTest(int testNumber) {
       break;
     case 7:
       runRS485Tests();
+      break;
+    case 8:
+      runProtocolTests();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -271,6 +281,10 @@ void loop() {
     } else if (input == "7") {
       Serial.println("运行RS485通信测试...");
       runSelectedTest(7);
+      showTestMenu();
+    } else if (input == "8") {
+      Serial.println("运行TCP协议测试...");
+      runSelectedTest(8);
       showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
