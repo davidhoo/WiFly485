@@ -26,6 +26,7 @@
 #define DEFAULT_SLAVE_NAME "WiFly485_Slave"
 #define DEFAULT_MASTER_TCP_PORT 8888
 #define DEFAULT_SYNC_PORT 8889
+#define HEARTBEAT_PORT 8890
 
 // 系统配置
 #define DEFAULT_CONFIG_FILE_PATH "/config.json"
