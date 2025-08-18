@@ -6,6 +6,7 @@
 #include "mdns_service.h"
 #include "rs485.h"
 #include "tcp_protocol.h"
+#include "config_sync.h"
 
 // 全局变量
 Device device;
@@ -15,6 +16,7 @@ WiFiManager wifiManager;
 MDNSService mdnsService;
 RS485 rs485;
 TCPProtocol tcpProtocol;
+ConfigSync configSync;
 
 void setup()
 {
@@ -79,6 +81,14 @@ void setup()
   
   LOG_I("Main", "TCP协议初始化成功");
   
+  // 初始化配置同步
+  if (!configSync.begin(&device, &configManager)) {
+    LOG_E("Main", "配置同步初始化失败");
+    return;
+  }
+  
+  LOG_I("Main", "配置同步初始化成功");
+  
   LOG_I("Main", "主程序初始化完成");
   Serial.println("=== 主程序初始化完成 ===");
 }
@@ -93,6 +103,9 @@ void loop()
   
   // 处理TCP协议
   tcpProtocol.handle();
+  
+  // 处理配置同步
+  configSync.handle();
   
   // 短暂延迟以避免过度占用CPU
   delay(10);

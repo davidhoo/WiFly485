@@ -67,6 +67,8 @@ extern void runRS485Tests();
 // TCP协议测试函数声明
 extern void runProtocolTests();
 
+// 配置同步测试函数声明
+extern void run_config_sync_tests();
 
 // 显示测试菜单
 void showTestMenu() {
@@ -81,6 +83,7 @@ void showTestMenu() {
   Serial.println("6 - mDNS服务测试");
   Serial.println("7 - RS485通信测试");
   Serial.println("8 - TCP协议测试");
+  Serial.println("9 - 配置同步测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -189,6 +192,8 @@ void setup() {
   // 注册TCP协议测试
   testFramework.registerTest(runProtocolTests, "TCPProtocol");
   
+  // 注册配置同步测试
+  testFramework.registerTest(run_config_sync_tests, "ConfigSync");
   
   // 显示测试菜单
   showTestMenu();
@@ -231,6 +236,9 @@ void runSelectedTest(int testNumber) {
       break;
     case 8:
       runProtocolTests();
+      break;
+    case 9:
+      run_config_sync_tests();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -285,6 +293,10 @@ void loop() {
     } else if (input == "8") {
       Serial.println("运行TCP协议测试...");
       runSelectedTest(8);
+      showTestMenu();
+    } else if (input == "9") {
+      Serial.println("运行配置同步测试...");
+      runSelectedTest(9);
       showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
