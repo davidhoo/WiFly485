@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"1.0">
+    <title>WiFly485 配置管理</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>WiFly485 配置管理</h1>
+            <p>ESP8266 RS485 WiFi中继系统</p>
+        </header>
+        
+        <main>
+            <section class="config-section">
+                <h2>网络配置</h2>
+                <form id="network-config-form">
+                    <div class="form-group">
+                        <label for="ssid">WiFi SSID:</label>
+                        <input type="text" id="ssid" name="ssid" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">WiFi 密码:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="dhcp-enabled" name="dhcp-enabled">
+                        <label for="dhcp-enabled">启用DHCP</label>
+                    </div>
+                    
+                    <div class="form-group" id="static-ip-group">
+                        <label for="ip-address">IP地址:</label>
+                        <input type="text" id="ip-address" name="ip-address">
+                    </div>
+                    
+                    <div class="form-group" id="gateway-group">
+                        <label for="gateway">网关:</label>
+                        <input type="text" id="gateway" name="gateway">
+                    </div>
+                    
+                    <div class="form-group" id="subnet-group">
+                        <label for="subnet">子网掩码:</label>
+                        <input type="text" id="subnet" name="subnet">
+                    </div>
+                </form>
+            </section>
+            
+            <section class="config-section" id="rs485-config-section">
+                <h2>RS485配置</h2>
+                <form id="rs485-config-form">
+                    <div class="form-group">
+                        <label for="baud-rate">波特率:</label>
+                        <select id="baud-rate" name="baud-rate">
+                            <option value="9600">9600</option>
+                            <option value="19200">19200</option>
+                            <option value="38400">38400</option>
+                            <option value="57600">57600</option>
+                            <option value="115200">115200</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="data-bits">数据位:</label>
+                        <select id="data-bits" name="data-bits">
+                            <option value="5">5</option>
+                            <option value="6">6</option>
+                            <option value="7">7</option>
+                            <option value="8">8</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="parity">校验位:</label>
+                        <select id="parity" name="parity">
+                            <option value="0">无校验</option>
+                            <option value="1">奇校验</option>
+                            <option value="2">偶校验</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="stop-bits">停止位:</label>
+                        <select id="stop-bits" name="stop-bits">
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+                </form>
+            </section>
+            
+            <section class="config-section" id="device-config-section">
+                <h2>设备配置</h2>
+                <form id="device-config-form">
+                    <div class="form-group">
+                        <label for="device-name">设备名称:</label>
+                        <input type="text" id="device-name" name="device-name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="device-role">设备角色:</label>
+                        <select id="device-role" name="device-role">
+                            <option value="master">主设备</option>
+                            <option value="slave">从设备</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tcp-port">TCP端口:</label>
+                        <input type="number" id="tcp-port" name="tcp-port" min="1" max="65535" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="sync-port">同步端口:</label>
+                        <input type="number" id="sync-port" name="sync-port" min="1" max="65535" required>
+                    </div>
+                </form>
+            </section>
+            
+            <section class="control-section">
+                <div class="button-group">
+                    <button id="save-config-btn" class="btn btn-primary">保存配置</button>
+                    <button id="reset-config-btn" class="btn btn-secondary">重置配置</button>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 WiFly485 项目</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

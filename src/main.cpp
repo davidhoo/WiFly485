@@ -7,6 +7,7 @@
 #include "rs485.h"
 #include "tcp_protocol.h"
 #include "config_sync.h"
+#include "web_server.h"
 
 // 全局变量
 Device device;
@@ -17,6 +18,7 @@ MDNSService mdnsService;
 RS485 rs485;
 TCPProtocol tcpProtocol;
 ConfigSync configSync;
+WebServer webServer(configManager, device);
 
 void setup()
 {
@@ -89,6 +91,10 @@ void setup()
   
   LOG_I("Main", "配置同步初始化成功");
   
+  // 初始化Web服务器
+  webServer.begin();
+  LOG_I("Main", "Web服务器初始化成功");
+  
   LOG_I("Main", "主程序初始化完成");
   Serial.println("=== 主程序初始化完成 ===");
 }
@@ -106,6 +112,9 @@ void loop()
   
   // 处理配置同步
   configSync.handle();
+  
+  // 处理Web服务器
+  webServer.handleClient();
   
   // 短暂延迟以避免过度占用CPU
   delay(10);
