@@ -18,5 +18,8 @@
     "role": "unknown",
     "tcpPort": 8888,
     "syncPort": 8889
+  },
+  "master": {
+    "ip": "192.168.4.1"
   }
 }

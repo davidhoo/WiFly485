@@ -22,6 +22,10 @@ struct RS485Config {
   uint8_t stopBits;
 };
 
+struct MasterConfig {
+  String ip;
+};
+
 struct DeviceConfig {
   String name;
   String role;  // "master" or "slave"
@@ -53,11 +57,13 @@ public:
   NetworkConfig getNetworkConfig();
   RS485Config getRS485Config();
   DeviceConfig getDeviceConfig();
+  MasterConfig getMasterConfig();
   
   // 设置配置
   void setNetworkConfig(const NetworkConfig& config);
   void setRS485Config(const RS485Config& config);
   void setDeviceConfig(const DeviceConfig& config);
+  void setMasterConfig(const MasterConfig& config);
   
   // 检查配置文件是否存在
   bool configFileExists();
@@ -70,6 +76,7 @@ private:
   NetworkConfig networkConfig;
   RS485Config rs485Config;
   DeviceConfig deviceConfig;
+  MasterConfig masterConfig;
   
   // 配置文件路径
   const char* CONFIG_FILE_PATH = "/config.json";

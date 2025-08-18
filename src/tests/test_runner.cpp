@@ -79,6 +79,9 @@ extern void test_led_basic();
 extern void test_led_states();
 extern void test_led_priority();
 
+// 心跳检测测试函数声明
+extern void runHeartbeatTests();
+
 // Web界面测试函数声明
 extern void testWebInterface();
 
@@ -100,6 +103,7 @@ void showTestMenu() {
   Serial.println("11 - LED指示系统基本功能测试");
   Serial.println("12 - LED指示系统状态模式测试");
   Serial.println("13 - LED指示系统优先级管理测试");
+  Serial.println("14 - 心跳检测测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -216,6 +220,9 @@ void setup() {
   testFramework.registerTest(test_led_states, "LEDIndicatorStates");
   testFramework.registerTest(test_led_priority, "LEDIndicatorPriority");
   
+  // 注册心跳检测测试
+  testFramework.registerTest(runHeartbeatTests, "Heartbeat");
+
   // 注册Web界面测试
   testFramework.registerTest(testWebInterface, "WebInterface");
   
@@ -279,6 +286,9 @@ void runSelectedTest(int testNumber) {
       break;
     case 13:
       test_led_priority();
+      break;
+    case 14:
+      runHeartbeatTests();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -353,6 +363,10 @@ void loop() {
     } else if (input == "13") {
       Serial.println("运行LED指示系统优先级管理测试...");
       runSelectedTest(13);
+      showTestMenu();
+    } else if (input == "14") {
+      Serial.println("运行心跳检测测试...");
+      runSelectedTest(14);
       showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();

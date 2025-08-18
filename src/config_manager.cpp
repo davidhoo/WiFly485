@@ -103,6 +103,9 @@ void ConfigManager::generateDefaultConfig() {
   deviceConfig.tcpPort = 8888;
   deviceConfig.syncPort = 8889;
 #endif
+  
+  // 生成主设备配置默认值
+  masterConfig.ip = "192.168.4.1";
 }
 
 bool ConfigManager::validateConfig() {
@@ -183,6 +186,10 @@ DeviceConfig ConfigManager::getDeviceConfig() {
   return deviceConfig;
 }
 
+MasterConfig ConfigManager::getMasterConfig() {
+  return masterConfig;
+}
+
 void ConfigManager::setNetworkConfig(const NetworkConfig& config) {
   networkConfig = config;
 }
@@ -193,6 +200,10 @@ void ConfigManager::setRS485Config(const RS485Config& config) {
 
 void ConfigManager::setDeviceConfig(const DeviceConfig& config) {
   deviceConfig = config;
+}
+
+void ConfigManager::setMasterConfig(const MasterConfig& config) {
+  masterConfig = config;
 }
 
 bool ConfigManager::configFileExists() {
@@ -255,6 +266,10 @@ bool ConfigManager::parseConfigFile() {
   deviceConfig.tcpPort = device["tcpPort"];
   deviceConfig.syncPort = device["syncPort"];
   
+  // 解析主设备配置
+  JsonObject master = doc["master"];
+  masterConfig.ip = master["ip"].as<String>();
+  
   return true;
 }
 
@@ -284,6 +299,10 @@ bool ConfigManager::writeConfigFile() {
   device["role"] = deviceConfig.role;
   device["tcpPort"] = deviceConfig.tcpPort;
   device["syncPort"] = deviceConfig.syncPort;
+  
+  // 添加主设备配置
+  JsonObject master = doc.createNestedObject("master");
+  master["ip"] = masterConfig.ip;
   
   // 打开配置文件进行写入
   File configFile = SPIFFS.open(CONFIG_FILE_PATH, "w");
