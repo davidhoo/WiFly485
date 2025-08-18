@@ -5,6 +5,7 @@
 #include "test_framework.h"
 #include "wifi_manager.h"
 #include "mdns_service.h"
+#include "rs485.h"
 
 // 全局变量
 Device device;
@@ -57,9 +58,12 @@ TEST(DeviceName) {
 
 // WiFi测试函数声明
 extern void runWiFiTests();
-
 // mDNS测试函数声明
 extern void runMDNSTests();
+
+// RS485测试函数声明
+extern void runRS485Tests();
+
 
 // 显示测试菜单
 void showTestMenu() {
@@ -72,6 +76,7 @@ void showTestMenu() {
   Serial.println("4 - 配置管理器测试");
   Serial.println("5 - WiFi管理器测试");
   Serial.println("6 - mDNS服务测试");
+  Serial.println("7 - RS485通信测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -171,9 +176,12 @@ void setup() {
   
   // 注册WiFi测试
   testFramework.registerTest(runWiFiTests, "WiFiManager");
-  
   // 注册mDNS测试
   testFramework.registerTest(runMDNSTests, "MDNSService");
+  
+  // 注册RS485测试
+  testFramework.registerTest(runRS485Tests, "RS485");
+  
   
   // 显示测试菜单
   showTestMenu();
@@ -210,6 +218,9 @@ void runSelectedTest(int testNumber) {
       break;
     case 6:
       runMDNSTests();
+      break;
+    case 7:
+      runRS485Tests();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -256,6 +267,10 @@ void loop() {
     } else if (input == "6") {
       Serial.println("运行mDNS服务测试...");
       runSelectedTest(6);
+      showTestMenu();
+    } else if (input == "7") {
+      Serial.println("运行RS485通信测试...");
+      runSelectedTest(7);
       showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
