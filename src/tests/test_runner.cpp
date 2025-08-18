@@ -6,11 +6,15 @@
 #include "wifi_manager.h"
 #include "mdns_service.h"
 #include "rs485.h"
+#include "led_indicator.h"
 
 // 全局变量
 Device device;
 extern Logger logger;
 ConfigManager configManager;
+LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
+LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
+LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
 
 // 测试函数声明 (使用 TEST 宏定义)
 TEST(DeviceRole) {
@@ -70,6 +74,11 @@ extern void runProtocolTests();
 // 配置同步测试函数声明
 extern void run_config_sync_tests();
 
+// LED指示系统测试函数声明
+extern void test_led_basic();
+extern void test_led_states();
+extern void test_led_priority();
+
 // Web界面测试函数声明
 extern void testWebInterface();
 
@@ -88,6 +97,9 @@ void showTestMenu() {
   Serial.println("8 - TCP协议测试");
   Serial.println("9 - 配置同步测试");
   Serial.println("10 - Web界面测试");
+  Serial.println("11 - LED指示系统基本功能测试");
+  Serial.println("12 - LED指示系统状态模式测试");
+  Serial.println("13 - LED指示系统优先级管理测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -199,6 +211,11 @@ void setup() {
   // 注册配置同步测试
   testFramework.registerTest(run_config_sync_tests, "ConfigSync");
   
+  // 注册LED指示系统测试
+  testFramework.registerTest(test_led_basic, "LEDIndicatorBasic");
+  testFramework.registerTest(test_led_states, "LEDIndicatorStates");
+  testFramework.registerTest(test_led_priority, "LEDIndicatorPriority");
+  
   // 注册Web界面测试
   testFramework.registerTest(testWebInterface, "WebInterface");
   
@@ -212,6 +229,10 @@ void setup() {
   while (Serial.available() > 0) {
     Serial.read();
   }
+  
+  // 初始化LED指示器
+  ledIndicator.begin();
+  ledIndicator.setState(LEDState::OFF, LEDPriority::PRIORITY_LOW);
 }
 
 // 运行选定的测试
@@ -249,6 +270,15 @@ void runSelectedTest(int testNumber) {
       break;
     case 10:
       testWebInterface();
+      break;
+    case 11:
+      test_led_basic();
+      break;
+    case 12:
+      test_led_states();
+      break;
+    case 13:
+      test_led_priority();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -312,6 +342,18 @@ void loop() {
       Serial.println("运行Web界面测试...");
       runSelectedTest(10);
       showTestMenu();
+    } else if (input == "11") {
+      Serial.println("运行LED指示系统基本功能测试...");
+      runSelectedTest(11);
+      showTestMenu();
+    } else if (input == "12") {
+      Serial.println("运行LED指示系统状态模式测试...");
+      runSelectedTest(12);
+      showTestMenu();
+    } else if (input == "13") {
+      Serial.println("运行LED指示系统优先级管理测试...");
+      runSelectedTest(13);
+      showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
     } else if (input == "q" || input == "quit") {
@@ -329,6 +371,22 @@ void loop() {
       showTestMenu();
     }
   }
+  
+  // 更新LED指示器状态
+  if (Serial.available() > 0) {
+    // 有串口输入，表示可能在运行测试
+    if (ledIndicator.getCurrentState() != LEDState::BLINK_FAST || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+      ledIndicator.setState(LEDState::BLINK_FAST, LEDPriority::PRIORITY_NORMAL);
+    }
+  } else {
+    // 空闲状态
+    if (ledIndicator.getCurrentState() != LEDState::ON || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_LOW) {
+      ledIndicator.setState(LEDState::ON, LEDPriority::PRIORITY_LOW);
+    }
+  }
+  
+  // 更新LED指示器
+  ledIndicator.update();
   
   delay(100); // 短暂延迟以避免过度占用CPU
 }
