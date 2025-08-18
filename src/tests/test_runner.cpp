@@ -3,6 +3,8 @@
 #include "logger.h"
 #include "config_manager.h"
 #include "test_framework.h"
+#include "wifi_manager.h"
+#include "mdns_service.h"
 
 // 全局变量
 Device device;
@@ -53,6 +55,12 @@ TEST(DeviceName) {
   LOG_I("Test", "设备名称测试完成");
 }
 
+// WiFi测试函数声明
+extern void runWiFiTests();
+
+// mDNS测试函数声明
+extern void runMDNSTests();
+
 // 显示测试菜单
 void showTestMenu() {
   Serial.println();
@@ -62,6 +70,8 @@ void showTestMenu() {
   Serial.println("2 - 设备名称测试");
   Serial.println("3 - 日志系统测试");
   Serial.println("4 - 配置管理器测试");
+  Serial.println("5 - WiFi管理器测试");
+  Serial.println("6 - mDNS服务测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -159,6 +169,12 @@ void setup() {
   RUN_TEST(Logger);
   RUN_TEST(ConfigManager);
   
+  // 注册WiFi测试
+  testFramework.registerTest(runWiFiTests, "WiFiManager");
+  
+  // 注册mDNS测试
+  testFramework.registerTest(runMDNSTests, "MDNSService");
+  
   // 显示测试菜单
   showTestMenu();
   
@@ -188,6 +204,12 @@ void runSelectedTest(int testNumber) {
       break;
     case 4:
       test_ConfigManager();
+      break;
+    case 5:
+      runWiFiTests();
+      break;
+    case 6:
+      runMDNSTests();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -227,10 +249,18 @@ void loop() {
       Serial.println("运行配置管理器测试...");
       runSelectedTest(4);
       showTestMenu();
+    } else if (input == "5") {
+      Serial.println("运行WiFi管理器测试...");
+      runSelectedTest(5);
+      showTestMenu();
+    } else if (input == "6") {
+      Serial.println("运行mDNS服务测试...");
+      runSelectedTest(6);
+      showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
     } else if (input == "q" || input == "quit") {
-      Serial.println("退出测试程序。");
+      Serial.println("^+q,退出测试程序。");
       Serial.println("再见！");
       // 停止处理输入，但保持程序运行
       // 在Arduino中，我们不能真正退出loop()函数
