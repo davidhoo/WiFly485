@@ -50,6 +50,9 @@ public:
   // 生成默认配置
   void generateDefaultConfig();
   
+  // 重新初始化配置（删除现有配置并创建新的默认配置）
+  bool reinitializeConfig();
+  
   // 验证配置
   bool validateConfig();
   

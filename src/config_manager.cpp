@@ -1,4 +1,5 @@
 #include "config_manager.h"
+#include "config.h"
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 #include <FS.h>
@@ -20,18 +21,27 @@ bool ConfigManager::begin() {
     return false;
   }
   
-  // 如果配置文件存在，加载配置
-  if (configFileExists()) {
-    if (!loadConfig()) {
-      REPORT_ERROR(ERROR_CONFIG_LOAD_FAILED, "ConfigManager", "Failed to load config, using default config");
-      generateDefaultConfig();
+  // 检查是否需要重新初始化配置（通过构建标志）
+  #ifdef REINITIALIZE_CONFIG
+    Serial.println("REINITIALIZE_CONFIG flag set, reinitializing config");
+    if (!reinitializeConfig()) {
+      Serial.println("Failed to reinitialize config");
+      return false;
     }
-  } else {
-    // 配置文件不存在，生成默认配置并保存
-    Serial.println("Config file not found, generating default config");
-    generateDefaultConfig();
-    saveConfig();
-  }
+  #else
+    // 如果配置文件存在，加载配置
+    if (configFileExists()) {
+      if (!loadConfig()) {
+        REPORT_ERROR(ERROR_CONFIG_LOAD_FAILED, "ConfigManager", "Failed to load config, using default config");
+        generateDefaultConfig();
+      }
+    } else {
+      // 配置文件不存在，生成默认配置并保存
+      Serial.println("Config file not found, generating default config");
+      generateDefaultConfig();
+      saveConfig();
+    }
+  #endif
   
   // 验证配置
   if (!validateConfig()) {
@@ -76,14 +86,41 @@ bool ConfigManager::saveConfig() {
   return true;
 }
 
+bool ConfigManager::reinitializeConfig() {
+  // 删除现有的配置文件
+  if (configFileExists()) {
+    if (!deleteConfigFile()) {
+      Serial.println("Failed to delete existing config file");
+      return false;
+    }
+    Serial.println("Existing config file deleted");
+  }
+  
+  // 生成默认配置
+  generateDefaultConfig();
+  
+  // 保存默认配置
+  if (!saveConfig()) {
+    Serial.println("Failed to save default config");
+    return false;
+  }
+  
+  Serial.println("Config reinitialized with default values");
+  return true;
+}
+
 void ConfigManager::generateDefaultConfig() {
-  // 生成网络配置默认值
-  networkConfig.ssid = "WiFly485_Network";
-  networkConfig.password = "default_password";
-  networkConfig.dhcpEnabled = true;
-  networkConfig.ip = "192.168.1.100";
-  networkConfig.gateway = "192.168.1.1";
-  networkConfig.subnet = "255.255.255.0";
+  // Generate default network configuration
+  // Using constants from config.h for better maintainability
+  networkConfig.ssid = DEFAULT_SSID;
+  networkConfig.password = DEFAULT_PASSWORD;
+  networkConfig.dhcpEnabled = DEFAULT_DHCP_ENABLED;
+  
+  // Only set static IP configuration when DHCP is disabled
+  // When DHCP is enabled, these values are not used but we still set them for consistency
+  networkConfig.ip = DEFAULT_IP;
+  networkConfig.gateway = DEFAULT_GATEWAY;
+  networkConfig.subnet = DEFAULT_SUBNET;
   
   // 生成RS485配置默认值
   rs485Config.baudRate = 9600;
