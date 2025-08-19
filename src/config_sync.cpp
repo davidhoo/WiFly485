@@ -1,6 +1,7 @@
 #include "config_sync.h"
 #include <ArduinoJson.h>
 #include <ESP8266WiFi.h>
+#include "error_handler.h"
 
 ConfigSync::ConfigSync() :
   device(nullptr),
@@ -25,9 +26,8 @@ ConfigSync::~ConfigSync() {
 bool ConfigSync::begin(Device* device, ConfigManager* configManager) {
   this->device = device;
   this->configManager = configManager;
-  
   if (!this->device || !this->configManager) {
-    Serial.println("ConfigSync: Invalid device or configManager");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "ConfigSync", "Invalid device or configManager");
     return false;
   }
   
@@ -124,7 +124,7 @@ bool ConfigSync::requestSync() {
   String request = "SYNC_CONFIG";
   size_t sent = client.write(request.c_str(), request.length());
   if (sent != request.length()) {
-    Serial.println("ConfigSync: Failed to send sync request");
+    REPORT_ERROR(ERROR_TCP_SEND_FAILED, "ConfigSync", "Failed to send sync request");
     return false;
   }
   
@@ -173,7 +173,7 @@ bool ConfigSync::isSyncTimedOut() {
 bool ConfigSync::sendConfig() {
   // 检查连接状态
   if (!client.connected()) {
-    Serial.println("ConfigSync: Client not connected");
+    REPORT_ERROR(ERROR_TCP_CONNECTION_FAILED, "ConfigSync", "Client not connected");
     return false;
   }
   
@@ -188,14 +188,14 @@ bool ConfigSync::sendConfig() {
   uint32_t jsonLength = configJson.length();
   size_t lengthSent = client.write((uint8_t*)&jsonLength, sizeof(jsonLength));
   if (lengthSent != sizeof(jsonLength)) {
-    Serial.println("ConfigSync: Failed to send JSON length");
+    REPORT_ERROR(ERROR_TCP_SEND_FAILED, "ConfigSync", "Failed to send JSON length");
     return false;
   }
   
   // 发送配置JSON
   size_t jsonSent = client.write(configJson.c_str(), jsonLength);
   if (jsonSent != jsonLength) {
-    Serial.println("ConfigSync: Failed to send JSON config");
+    REPORT_ERROR(ERROR_TCP_SEND_FAILED, "ConfigSync", "Failed to send JSON config");
     return false;
   }
   
@@ -209,6 +209,7 @@ bool ConfigSync::sendConfig() {
 bool ConfigSync::receiveConfig() {
   // 检查连接状态
   if (!client.connected()) {
+    REPORT_ERROR(ERROR_TCP_CONNECTION_FAILED, "ConfigSync", "Client not connected for config reception");
     return false;
   }
   
@@ -221,7 +222,7 @@ bool ConfigSync::receiveConfig() {
   uint32_t jsonLength;
   size_t lengthRead = client.readBytes((uint8_t*)&jsonLength, sizeof(jsonLength));
   if (lengthRead != sizeof(jsonLength)) {
-    Serial.println("ConfigSync: Failed to read JSON length");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "ConfigSync", "Failed to read JSON length");
     return false;
   }
   
@@ -241,7 +242,7 @@ bool ConfigSync::receiveConfig() {
   
   size_t jsonRead = client.readBytes(jsonBuffer.get(), jsonLength);
   if (jsonRead != jsonLength) {
-    Serial.println("ConfigSync: Failed to read JSON data");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "ConfigSync", "Failed to read JSON data");
     return false;
   }
   
@@ -251,7 +252,7 @@ bool ConfigSync::receiveConfig() {
   // 更新配置
   String jsonStr(jsonBuffer.get());
   if (!updateConfigFromJson(jsonStr)) {
-    Serial.println("ConfigSync: Failed to update config from JSON");
+    REPORT_ERROR(ERROR_CONFIG_SYNC_FAILED, "ConfigSync", "Failed to update config from JSON");
     return false;
   }
   
@@ -376,6 +377,7 @@ bool ConfigSync::connectToMaster() {
     return true;
   } else {
     Serial.println("ConfigSync: Failed to connect to master");
+    REPORT_ERROR(ERROR_TCP_CONNECTION_FAILED, "ConfigSync", "Failed to connect to master");
     updateSyncStatus(CONFIG_SYNC_FAILED);
     return false;
   }

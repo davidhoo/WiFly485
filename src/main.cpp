@@ -9,6 +9,7 @@
 #include "config_sync.h"
 #include "web_server.h"
 #include "led_indicator.h"
+#include "error_handler.h"
 
 // 全局变量
 Device device;
@@ -23,6 +24,9 @@ LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
 LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
 LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
 
+// 错误处理器
+extern ErrorHandler errorHandler;
+
 void setup()
 {
   // 初始化串口
@@ -36,6 +40,11 @@ void setup()
   logger.setLogLevel(LOG_LEVEL_VERBOSE);
   
   LOG_I("Main", "开始主程序初始化");
+  
+  // 初始化错误处理器
+  errorHandler.begin();
+  ErrorHandler::setGlobalErrorHandler(&errorHandler);
+  LOG_I("Main", "错误处理器初始化成功");
   
   // 初始化设备
   if (!device.begin()) {

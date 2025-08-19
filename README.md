@@ -77,10 +77,16 @@ WiFly485/
 ├── include/              # 头文件目录
 ├── lib/                  # 库文件目录
 ├── test/                 # 测试文件目录
+├── docs/                 # 文档目录
+│   └── error_handling.md  # 错误处理框架文档
 ├── platformio.ini        # PlatformIO配置文件
 ├── 需求文档.md           # 详细需求文档
 └── README.md             # 项目说明
 ```
+
+## ⚠️ 错误处理框架
+
+本项目实现了统一的错误处理框架，用于一致地处理、记录和报告错误。详细信息请参见 [错误处理文档](docs/error_handling.md)。
 
 ## 🛠️ 开发环境
 

@@ -1,6 +1,7 @@
 #include "mdns_service.h"
 #include <ESP8266mDNS.h>
 #include "config.h"
+#include "error_handler.h"
 
 MDNSService::MDNSService() :
   device(nullptr),
@@ -19,9 +20,8 @@ MDNSService::~MDNSService() {
 bool MDNSService::begin(Device* device, WiFiManager* wifiManager) {
   this->device = device;
   this->wifiManager = wifiManager;
-  
   if (!this->device || !this->wifiManager) {
-    Serial.println("MDNSService: Invalid device or wifiManager");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "MDNSService", "Invalid device or wifiManager");
     return false;
   }
   
@@ -39,13 +39,13 @@ bool MDNSService::begin(Device* device, WiFiManager* wifiManager) {
 
 bool MDNSService::start() {
   if (!device || !wifiManager) {
-    Serial.println("MDNSService: Not initialized");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "MDNSService", "Not initialized");
     return false;
   }
   
   // 检查WiFi连接状态
   if (wifiManager->getConnectionStatus() != WIFI_CONNECTED) {
-    Serial.println("MDNSService: WiFi not connected");
+    REPORT_ERROR(ERROR_WIFI_NOT_CONNECTED, "MDNSService", "WiFi not connected");
     return false;
   }
   
@@ -59,7 +59,7 @@ bool MDNSService::start() {
     return true;
   } else {
     updateServiceStatus(MDNS_SERVICE_ERROR);
-    Serial.println("MDNSService: Failed to start service");
+    REPORT_ERROR(ERROR_MDNS_FAILED, "MDNSService", "Failed to start service");
     return false;
   }
 }
@@ -154,7 +154,7 @@ void MDNSService::updateServiceStatus(MDNSServiceStatus status) {
 bool MDNSService::setupMDNSService() {
   // 初始化mDNS
   if (!MDNS.begin(serviceName.c_str())) {
-    Serial.println("MDNSService: Failed to start mDNS");
+    REPORT_ERROR(ERROR_MDNS_FAILED, "MDNSService", "Failed to start mDNS");
     return false;
   }
   
