@@ -6,6 +6,7 @@
 ConfigSync::ConfigSync() :
   device(nullptr),
   configManager(nullptr),
+  mdnsService(nullptr),  // 初始化mDNS服务指针
   server(nullptr),
   syncStatus(CONFIG_SYNC_DISCONNECTED),
   lastSyncAttempt(0),
@@ -22,12 +23,12 @@ ConfigSync::~ConfigSync() {
     client.stop();
   }
 }
-
-bool ConfigSync::begin(Device* device, ConfigManager* configManager) {
+bool ConfigSync::begin(Device* device, ConfigManager* configManager, MDNSService* mdnsService) {  // 修改函数签名
   this->device = device;
   this->configManager = configManager;
-  if (!this->device || !this->configManager) {
-    REPORT_ERROR(ERROR_INVALID_PARAMETER, "ConfigSync", "Invalid device or configManager");
+  this->mdnsService = mdnsService;  // 保存mDNS服务指针
+  if (!this->device || !this->configManager || !this->mdnsService) {  // 添加对mDNS服务的检查
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "ConfigSync", "Invalid device, configManager or mdnsService");
     return false;
   }
   
@@ -46,6 +47,7 @@ bool ConfigSync::begin(Device* device, ConfigManager* configManager) {
   
   return true;
 }
+
 
 void ConfigSync::handle() {
   // 处理配置同步
@@ -355,23 +357,51 @@ void ConfigSync::handleClient() {
     }
   }
 }
+// 实现通过mDNS发现主设备IP地址的函数
+bool ConfigSync::discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort) {
+  if (!mdnsService) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "ConfigSync", "mDNS service not initialized");
+    return false;
+  }
+  
+  // 使用mDNS服务查找主设备
+  String masterIPStr;
+  if (mdnsService->discoverMaster(masterIPStr, masterPort)) {
+    // 将String类型的IP地址转换为IPAddress类型
+    if (masterIP.fromString(masterIPStr)) {
+      Serial.printf("ConfigSync: Discovered master at %s:%d\n", masterIPStr.c_str(), masterPort);
+      return true;
+    } else {
+      Serial.println("ConfigSync: Failed to parse master IP address");
+      return false;
+    }
+  } else {
+    Serial.println("ConfigSync: Failed to discover master via mDNS");
+    return false;
+  }
+}
 
 bool ConfigSync::connectToMaster() {
-  // 这里需要实现连接到主设备的逻辑
-  // 在实际应用中，可能需要通过mDNS或其他方式发现主设备的IP地址
-  // 为了简化，我们假设主设备的IP地址是已知的或通过配置获取的
+  // 通过mDNS查找主设备IP地址
+  IPAddress masterIP;
+  uint16_t masterPort = 8889; // 默认同步端口
   
-  // 示例代码，实际应用中需要替换为实际的主设备IP地址获取方式
-  IPAddress masterIP(192, 168, 1, 100); // 示例IP地址
+  Serial.println("ConfigSync: Discovering master via mDNS...");
+  if (!discoverMasterIP(masterIP, masterPort)) {
+    Serial.println("ConfigSync: Failed to discover master via mDNS");
+    // mDNS查找失败，返回false，让上层决定是否重试
+    updateSyncStatus(CONFIG_SYNC_FAILED);
+    return false;
+  }
   
   DeviceConfig deviceConfig = configManager->getDeviceConfig();
-  Serial.printf("ConfigSync: Connecting to master at %s:%d\n", masterIP.toString().c_str(), deviceConfig.syncPort);
+  Serial.printf("ConfigSync: Connecting to master at %s:%d\n", masterIP.toString().c_str(), masterPort);
   
   updateSyncStatus(CONFIG_SYNC_CONNECTING);
   syncStartTime = millis();
   
   // 尝试连接到主设备
-  if (client.connect(masterIP, deviceConfig.syncPort)) {
+  if (client.connect(masterIP, masterPort)) {
     Serial.println("ConfigSync: Connected to master");
     updateSyncStatus(CONFIG_SYNC_CONNECTED);
     return true;
@@ -382,6 +412,7 @@ bool ConfigSync::connectToMaster() {
     return false;
   }
 }
+
 
 String ConfigSync::getConfigAsJson() {
   // 创建JSON文档

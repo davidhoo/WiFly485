@@ -90,7 +90,7 @@ void setup()
   LOG_I("Main", "RS485初始化成功，波特率: %d", rs485Config.baudRate);
   
   // 初始化TCP协议
-  if (!tcpProtocol.begin(&device, &rs485)) {
+  if (!tcpProtocol.begin(&device, &rs485, &mdnsService)) {  // 修改函数调用，传递mDNS服务实例
     LOG_E("Main", "TCP协议初始化失败");
     return;
   }
@@ -98,13 +98,13 @@ void setup()
   LOG_I("Main", "TCP协议初始化成功");
   
   // 初始化配置同步
-  if (!configSync.begin(&device, &configManager)) {
+  if (!configSync.begin(&device, &configManager, &mdnsService)) {  // 修改函数调用，传递mDNS服务实例
     LOG_E("Main", "配置同步初始化失败");
     return;
   }
   
   LOG_I("Main", "配置同步初始化成功");
-  
+
   // 初始化Web服务器
   webServer.begin();
   LOG_I("Main", "Web服务器初始化成功");
@@ -206,8 +206,8 @@ void loop()
 
 // WiFi连接状态回调函数实现
 void onWiFiConnectionStatusChanged(WiFiConnectionStatus status) {
-  // 只有主设备在WiFi连接成功时才启动mDNS服务
-  if (device.isMaster() && status == WIFI_CONNECTED) {
+  // 主设备或从设备在WiFi连接成功时都启动mDNS服务
+  if (status == WIFI_CONNECTED) {
     Serial.println("Main: WiFi connected, starting mDNS service...");
     if (mdnsService.start()) {
       Serial.println("Main: mDNS service started successfully");

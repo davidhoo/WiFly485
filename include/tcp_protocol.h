@@ -7,6 +7,7 @@
 #include <WiFiServer.h>
 #include "device.h"
 #include "rs485.h"
+#include "mdns_service.h"
 
 // TCP连接状态枚举
 enum TCPConnectionStatus {
@@ -26,9 +27,9 @@ class TCPProtocol {
 public:
   TCPProtocol();
   ~TCPProtocol();
+// 初始化TCP协议
+bool begin(Device* device, RS485* rs485, MDNSService* mdnsService);  // 修改函数签名，添加mDNS服务参数
 
-  // 初始化TCP协议
-  bool begin(Device* device, RS485* rs485);
 
   // 处理TCP连接和数据传输
   void handle();
@@ -51,10 +52,10 @@ public:
   // 设置连接状态回调函数
   typedef void (*ConnectionStatusCallback)(TCPConnectionStatus status);
   void setConnectionStatusCallback(ConnectionStatusCallback callback);
-
 private:
   Device* device;
   RS485* rs485;
+  MDNSService* mdnsService;  // 添加mDNS服务指针
   
   WiFiServer* server;
   WiFiClient client;
@@ -89,6 +90,8 @@ private:
   void handleServer();
   void handleClient();
   bool connectToMaster();
+  bool discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort);  // 添加发现主设备IP的函数声明
 };
+
 
 #endif // TCP_PROTOCOL_H
