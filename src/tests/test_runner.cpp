@@ -88,6 +88,9 @@ extern void testWebInterface();
 // 错误处理框架测试函数声明
 extern void run_error_handler_tests();
 
+// 集成测试函数声明
+extern void run_integration_tests();
+
 // 显示测试菜单
 void showTestMenu() {
   Serial.println();
@@ -108,6 +111,7 @@ void showTestMenu() {
   Serial.println("13 - LED指示系统优先级管理测试");
   Serial.println("14 - 心跳检测测试");
   Serial.println("15 - 错误处理框架测试");
+  Serial.println("16 - 集成测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -233,6 +237,9 @@ void setup() {
   // 注册错误处理框架测试
   testFramework.registerTest(run_error_handler_tests, "ErrorHandler");
   
+  // 注册集成测试
+  testFramework.registerTest(run_integration_tests, "Integration");
+  
   // 显示测试菜单
   showTestMenu();
   
@@ -299,6 +306,9 @@ void runSelectedTest(int testNumber) {
       break;
     case 15:
       run_error_handler_tests();
+      break;
+    case 16:
+      run_integration_tests();
       break;
     default:
       Serial.println("无效的测试编号");
@@ -377,6 +387,10 @@ void loop() {
     } else if (input == "14") {
       Serial.println("运行心跳检测测试...");
       runSelectedTest(14);
+      showTestMenu();
+    } else if (input == "16") {
+      Serial.println("运行集成测试...");
+      runSelectedTest(16);
       showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
