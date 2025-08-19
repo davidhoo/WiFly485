@@ -1,11 +1,11 @@
 {
   "network": {
-    "ssid": "WiFly485_Network",
-    "password": "default_password",
+    "ssid": "David的iPhone",
+    "password": "11111111",
     "dhcpEnabled": true,
-    "ip": "192.168.1.100",
-    "gateway": "192.168.1.1",
-    "subnet": "255.255.255.0"
+    "ip": "0.0.0.0",
+    "gateway": "0.0.0.0",
+    "subnet": "0.0.0.0"
   },
   "rs485": {
     "baudRate": 9600,

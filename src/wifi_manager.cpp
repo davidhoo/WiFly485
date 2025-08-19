@@ -94,20 +94,58 @@ bool WiFiManager::connect() {
 }
 
 bool WiFiManager::connectToRouterWiFi() {
+  // 检查是否已初始化
+  if (!configManager || !device) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
+    updateConnectionStatus(WIFI_CONNECTION_FAILED);
+    return false;
+  }
+  
+  // 获取网络配置
+  NetworkConfig networkConfig = configManager->getNetworkConfig();
+  
+  // 检查SSID是否有效
+  if (networkConfig.ssid.length() == 0) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid SSID in config");
+    updateConnectionStatus(WIFI_CONNECTION_FAILED);
+    return false;
+  }
+  
   // 更新连接状态
   updateConnectionStatus(WIFI_CONNECTING);
   connectionStartTime = millis();
   
-  // 连接到指定的路由器WiFi
-  const char* ssid = "David的iPhone";
-  // const char* password = "qudfimakmge9242";
-  const char* password = "11111111";
+  // 配置静态IP（如果需要）
+  if (!networkConfig.dhcpEnabled) {
+    IPAddress ip, gateway, subnet;
+    if (ip.fromString(networkConfig.ip) &&
+        gateway.fromString(networkConfig.gateway) &&
+        subnet.fromString(networkConfig.subnet)) {
+      WiFi.config(ip, gateway, subnet);
+    }
+  }
   
-  Serial.printf("WiFiManager: Connecting to router WiFi %s\n", ssid);
-  WiFi.begin(ssid, password);
+  // 连接到WiFi网络
+  Serial.printf("WiFiManager: Connecting to router WiFi %s\n", networkConfig.ssid.c_str());
+  WiFi.begin(networkConfig.ssid.c_str(), networkConfig.password.c_str());
   
+  // 等待连接结果（最多等待10秒）
+  unsigned long startTime = millis();
+  const unsigned long timeout = 10000; // 10秒超时
   
-  return true;
+  while (WiFi.status() != WL_CONNECTED && (millis() - startTime) < timeout) {
+    delay(100);
+  }
+  
+  // 检查连接结果
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("WiFiManager: Successfully connected to router WiFi");
+    return true;
+  } else {
+    Serial.println("WiFiManager: Failed to connect to router WiFi");
+    updateConnectionStatus(WIFI_CONNECTION_FAILED);
+    return false;
+  }
 }
 
 bool WiFiManager::startAP() {
