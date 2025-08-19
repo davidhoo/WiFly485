@@ -13,6 +13,10 @@ WiFiManager::WiFiManager() :
   lastConnectionAttempt(0),
   connectionStartTime(0),
   apModeEnabled(false),
+  masterStartTime(0),
+  masterTimeoutChecked(false),
+  slaveStartTime(0),
+  slaveTimeoutChecked(false),
   statusCallback(nullptr) {
   // 构造函数
   // 设置全局实例指针
@@ -40,8 +44,8 @@ bool WiFiManager::begin(ConfigManager* configManager, Device* device) {
     // 主设备默认启用AP模式
     WiFi.mode(WIFI_AP_STA);
   } else {
-    // 从设备默认使用STA模式
-    WiFi.mode(WIFI_STA);
+    // 从设备也使用AP+STA模式，以便可以作为热点或连接到网络
+    WiFi.mode(WIFI_AP_STA);
   }
   
   return true;
@@ -189,24 +193,36 @@ void WiFiManager::handle() {
       lastConnectionAttempt = currentTime;
       connect();
     }
-  } else if (connectionStatus == WIFI_DISCONNECTED && device && device->isMaster()) {
-    // 主设备60秒超时检测
-    static unsigned long masterStartTime = 0;
-    static bool masterTimeoutChecked = false;
+  } else if (connectionStatus == WIFI_DISCONNECTED && device) {
+    // 主设备或从设备60秒超时检测
     
-    if (masterStartTime == 0) {
-      masterStartTime = millis();
-    }
-    
-    if (!masterTimeoutChecked && (millis() - masterStartTime) > MASTER_CONNECTION_TIMEOUT) {
-      Serial.println("WiFiManager: Master connection timeout, connecting to router WiFi");
-      masterTimeoutChecked = true;
-      connectToRouterWiFi(); // 连接到指定的路由器WiFi
+    if (device->isMaster()) {
+      // 主设备超时检测
+      if (masterStartTime == 0) {
+        masterStartTime = millis();
+      }
+      
+      if (!masterTimeoutChecked && (millis() - masterStartTime) > MASTER_CONNECTION_TIMEOUT) {
+        Serial.println("WiFiManager: Master connection timeout, connecting to router WiFi");
+        masterTimeoutChecked = true;
+        connectToRouterWiFi(); // 连接到指定的路由器WiFi
+      }
+    } else {
+      // 从设备超时检测
+      if (slaveStartTime == 0) {
+        slaveStartTime = millis();
+      }
+      
+      if (!slaveTimeoutChecked && (millis() - slaveStartTime) > MASTER_CONNECTION_TIMEOUT) {
+        Serial.println("WiFiManager: Slave connection timeout, connecting to router WiFi");
+        slaveTimeoutChecked = true;
+        connectToRouterWiFi(); // 连接到指定的路由器WiFi
+      }
     }
   }
   
-  // 如果是主设备且AP模式未启用，启动AP模式
-  if (device && device->isMaster() && !apModeEnabled) {
+  // 如果AP模式未启用，启动AP模式（主设备和从设备都启动AP）
+  if (device && !apModeEnabled) {
     startAP();
   }
 }

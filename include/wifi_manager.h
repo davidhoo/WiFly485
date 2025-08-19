@@ -66,6 +66,12 @@ private:
   unsigned long connectionStartTime;
   bool apModeEnabled;
   
+  // 超时跟踪变量
+  unsigned long masterStartTime;
+  bool masterTimeoutChecked;
+  unsigned long slaveStartTime;
+  bool slaveTimeoutChecked;
+  
   ConnectionStatusCallback statusCallback;
   
   // 静态事件处理函数
