@@ -27,6 +27,8 @@ LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
 // 错误处理器
 extern ErrorHandler errorHandler;
 
+// WiFi连接状态回调函数声明
+void onWiFiConnectionStatusChanged(WiFiConnectionStatus status);
 void setup()
 {
   // 初始化串口
@@ -110,6 +112,9 @@ void setup()
   // 初始化LED指示器
   ledIndicator.begin();
   ledIndicator.setState(LEDState::OFF, LEDPriority::PRIORITY_LOW);
+  
+  // 注册WiFi连接状态回调函数
+  wifiManager.setConnectionStatusCallback(onWiFiConnectionStatusChanged);
   
   LOG_I("Main", "主程序初始化完成");
   Serial.println("=== 主程序初始化完成 ===");
@@ -197,4 +202,17 @@ void loop()
   
   // 短暂延迟以避免过度占用CPU
   delay(10);
+}
+
+// WiFi连接状态回调函数实现
+void onWiFiConnectionStatusChanged(WiFiConnectionStatus status) {
+  // 只有主设备在WiFi连接成功时才启动mDNS服务
+  if (device.isMaster() && status == WIFI_CONNECTED) {
+    Serial.println("Main: WiFi connected, starting mDNS service...");
+    if (mdnsService.start()) {
+      Serial.println("Main: mDNS service started successfully");
+    } else {
+      Serial.println("Main: Failed to start mDNS service");
+    }
+  }
 }
