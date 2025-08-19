@@ -7,6 +7,7 @@
 #include <WiFiServer.h>
 #include "device.h"
 #include "config_manager.h"
+#include "mdns_service.h"
 
 // 配置同步状态枚举
 enum ConfigSyncStatus {
@@ -22,9 +23,9 @@ class ConfigSync {
 public:
   ConfigSync();
   ~ConfigSync();
+// 初始化配置同步
+bool begin(Device* device, ConfigManager* configManager, MDNSService* mdnsService);  // 修改函数签名，添加mDNS服务参数
 
-  // 初始化配置同步
-  bool begin(Device* device, ConfigManager* configManager);
 
   // 处理配置同步
   void handle();
@@ -44,10 +45,10 @@ public:
 
   // 强制同步配置（主设备调用）
   bool forceSync();
-
 private:
   Device* device;
   ConfigManager* configManager;
+  MDNSService* mdnsService;  // 添加mDNS服务指针
   
   WiFiServer* server;
   WiFiClient client;
@@ -72,8 +73,10 @@ private:
   void handleServer();
   void handleClient();
   bool connectToMaster();
+  bool discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort);  // 添加发现主设备IP的函数声明
   String getConfigAsJson();
   bool updateConfigFromJson(const String& json);
 };
+
 
 #endif // CONFIG_SYNC_H

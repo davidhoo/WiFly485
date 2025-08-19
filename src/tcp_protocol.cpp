@@ -5,6 +5,7 @@
 TCPProtocol::TCPProtocol() :
   device(nullptr),
   rs485(nullptr),
+  mdnsService(nullptr),  // 初始化mDNS服务指针
   server(nullptr),
   connectionStatus(TCP_DISCONNECTED),
   lastConnectionAttempt(0),
@@ -22,12 +23,12 @@ TCPProtocol::~TCPProtocol() {
     client.stop();
   }
 }
-
-bool TCPProtocol::begin(Device* device, RS485* rs485) {
+bool TCPProtocol::begin(Device* device, RS485* rs485, MDNSService* mdnsService) {  // 修改函数签名
   this->device = device;
   this->rs485 = rs485;
-  if (!this->device || !this->rs485) {
-    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid device or rs485");
+  this->mdnsService = mdnsService;  // 保存mDNS服务指针
+  if (!this->device || !this->rs485 || !this->mdnsService) {  // 添加对mDNS服务的检查
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid device, rs485 or mdnsService");
     return false;
   }
   
@@ -45,6 +46,7 @@ bool TCPProtocol::begin(Device* device, RS485* rs485) {
   
   return true;
 }
+
 
 void TCPProtocol::handle() {
   // 处理TCP连接和数据传输
@@ -348,21 +350,50 @@ void TCPProtocol::handleClient() {
   }
 }
 
+// 实现通过mDNS发现主设备IP地址的函数
+bool TCPProtocol::discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort) {
+  if (!mdnsService) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "mDNS service not initialized");
+    return false;
+  }
+  
+  // 使用mDNS服务查找主设备
+  String masterIPStr;
+  if (mdnsService->discoverMaster(masterIPStr, masterPort)) {
+    // 将String类型的IP地址转换为IPAddress类型
+    if (masterIP.fromString(masterIPStr)) {
+      Serial.printf("TCPProtocol: Discovered master at %s:%d\n", masterIPStr.c_str(), masterPort);
+      return true;
+    } else {
+      Serial.println("TCPProtocol: Failed to parse master IP address");
+      return false;
+    }
+  } else {
+    Serial.println("TCPProtocol: Failed to discover master via mDNS");
+    return false;
+  }
+}
+
 bool TCPProtocol::connectToMaster() {
-  // 这里需要实现连接到主设备的逻辑
-  // 在实际应用中，可能需要通过mDNS或其他方式发现主设备的IP地址
-  // 为了简化，我们假设主设备的IP地址是已知的或通过配置获取的
+  // 通过mDNS查找主设备IP地址
+  IPAddress masterIP;
+  uint16_t masterPort = 8888; // 默认端口
   
-  // 示例代码，实际应用中需要替换为实际的主设备IP地址获取方式
-  IPAddress masterIP(192, 168, 1, 100); // 示例IP地址
+  Serial.println("TCPProtocol: Discovering master via mDNS...");
+  if (!discoverMasterIP(masterIP, masterPort)) {
+    Serial.println("TCPProtocol: Failed to discover master via mDNS");
+    // mDNS查找失败，返回false，让上层决定是否重试
+    updateConnectionStatus(TCP_CONNECTION_FAILED);
+    return false;
+  }
   
-  Serial.printf("TCPProtocol: Connecting to master at %s:8888\n", masterIP.toString().c_str());
+  Serial.printf("TCPProtocol: Connecting to master at %s:%d\n", masterIP.toString().c_str(), masterPort);
   
   updateConnectionStatus(TCP_CONNECTING);
   connectionStartTime = millis();
   
   // 尝试连接到主设备
-  if (client.connect(masterIP, 8888)) {
+  if (client.connect(masterIP, masterPort)) {
     Serial.println("TCPProtocol: Connected to master");
     updateConnectionStatus(TCP_CONNECTED);
     return true;
