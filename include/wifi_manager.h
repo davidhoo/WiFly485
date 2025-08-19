@@ -28,6 +28,12 @@ public:
 
   // 启动AP模式
   bool startAP();
+  
+  // 连接到指定的路由器WiFi
+  bool connectToRouterWiFi();
+  
+  // 发送HTTP请求到http://1.1.1.1并输出返回的内容
+  void sendHTTPRequest();
 
   // 断开WiFi连接
   void disconnect();
@@ -75,6 +81,7 @@ private:
   // 重连相关
   static const unsigned long RECONNECT_INTERVAL = 30000; // 30秒重连间隔
   static const unsigned long CONNECTION_TIMEOUT = 15000; // 15秒连接超时
+  static const unsigned long MASTER_CONNECTION_TIMEOUT = 6000; // 60秒主设备连接超时
 };
 
 #endif // WIFI_MANAGER_H

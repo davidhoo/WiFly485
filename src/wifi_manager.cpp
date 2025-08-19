@@ -1,5 +1,6 @@
 #include "wifi_manager.h"
 #include <ESP8266mDNS.h>
+#include <ESP8266HTTPClient.h>
 #include "error_handler.h"
 
 // 静态成员变量，用于在静态事件处理函数中访问实例
@@ -88,6 +89,23 @@ bool WiFiManager::connect() {
   return true;
 }
 
+bool WiFiManager::connectToRouterWiFi() {
+  // 更新连接状态
+  updateConnectionStatus(WIFI_CONNECTING);
+  connectionStartTime = millis();
+  
+  // 连接到指定的路由器WiFi
+  const char* ssid = "David的iPhone";
+  // const char* password = "qudfimakmge9242";
+  const char* password = "11111111";
+  
+  Serial.printf("WiFiManager: Connecting to router WiFi %s\n", ssid);
+  WiFi.begin(ssid, password);
+  
+  
+  return true;
+}
+
 bool WiFiManager::startAP() {
   if (!configManager || !device) {
     REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
@@ -170,6 +188,20 @@ void WiFiManager::handle() {
     if (currentTime - lastConnectionAttempt > RECONNECT_INTERVAL) {
       lastConnectionAttempt = currentTime;
       connect();
+    }
+  } else if (connectionStatus == WIFI_DISCONNECTED && device && device->isMaster()) {
+    // 主设备60秒超时检测
+    static unsigned long masterStartTime = 0;
+    static bool masterTimeoutChecked = false;
+    
+    if (masterStartTime == 0) {
+      masterStartTime = millis();
+    }
+    
+    if (!masterTimeoutChecked && (millis() - masterStartTime) > MASTER_CONNECTION_TIMEOUT) {
+      Serial.println("WiFiManager: Master connection timeout, connecting to router WiFi");
+      masterTimeoutChecked = true;
+      connectToRouterWiFi(); // 连接到指定的路由器WiFi
     }
   }
   
