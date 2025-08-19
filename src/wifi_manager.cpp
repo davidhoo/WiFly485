@@ -13,6 +13,8 @@ WiFiManager::WiFiManager() :
   lastConnectionAttempt(0),
   connectionStartTime(0),
   apModeEnabled(false),
+  retryCount(0),
+  currentReconnectInterval(RECONNECT_INTERVAL),
   masterStartTime(0),
   masterTimeoutChecked(false),
   slaveStartTime(0),
@@ -227,8 +229,18 @@ void WiFiManager::handle() {
   } else if (connectionStatus == WIFI_CONNECTION_FAILED) {
     // 尝试重连
     unsigned long currentTime = millis();
-    if (currentTime - lastConnectionAttempt > RECONNECT_INTERVAL) {
+    if (currentTime - lastConnectionAttempt > currentReconnectInterval) {
       lastConnectionAttempt = currentTime;
+      retryCount++;
+      
+      // 递增重连间隔，最大不超过300秒
+      currentReconnectInterval = RECONNECT_INTERVAL * retryCount;
+      if (currentReconnectInterval > 300000) { // 300秒 = 5分钟
+        currentReconnectInterval = 300000;
+      }
+      
+      Serial.printf("WiFiManager: Reconnect attempt %d, next interval %lu ms\n",
+                    retryCount, currentReconnectInterval);
       connect();
     }
   } else if (connectionStatus == WIFI_DISCONNECTED && device) {
@@ -285,6 +297,13 @@ void WiFiManager::onWiFiEvent(WiFiEvent_t event) {
 void WiFiManager::updateConnectionStatus(WiFiConnectionStatus status) {
   if (connectionStatus != status) {
     connectionStatus = status;
+    
+    // 如果连接成功，重置重试计数和重连间隔
+    if (status == WIFI_CONNECTED) {
+      retryCount = 0;
+      currentReconnectInterval = RECONNECT_INTERVAL;
+      Serial.println("WiFiManager: Connection successful, reset retry count");
+    }
     
     // 调用回调函数
     if (statusCallback) {
