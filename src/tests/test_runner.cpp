@@ -85,6 +85,9 @@ extern void runHeartbeatTests();
 // Web界面测试函数声明
 extern void testWebInterface();
 
+// 错误处理框架测试函数声明
+extern void run_error_handler_tests();
+
 // 显示测试菜单
 void showTestMenu() {
   Serial.println();
@@ -104,6 +107,7 @@ void showTestMenu() {
   Serial.println("12 - LED指示系统状态模式测试");
   Serial.println("13 - LED指示系统优先级管理测试");
   Serial.println("14 - 心跳检测测试");
+  Serial.println("15 - 错误处理框架测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -226,6 +230,9 @@ void setup() {
   // 注册Web界面测试
   testFramework.registerTest(testWebInterface, "WebInterface");
   
+  // 注册错误处理框架测试
+  testFramework.registerTest(run_error_handler_tests, "ErrorHandler");
+  
   // 显示测试菜单
   showTestMenu();
   
@@ -289,6 +296,9 @@ void runSelectedTest(int testNumber) {
       break;
     case 14:
       runHeartbeatTests();
+      break;
+    case 15:
+      run_error_handler_tests();
       break;
     default:
       Serial.println("无效的测试编号");

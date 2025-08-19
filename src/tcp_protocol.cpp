@@ -1,5 +1,6 @@
 #include "tcp_protocol.h"
 #include <ESP8266WiFi.h>
+#include "error_handler.h"
 
 TCPProtocol::TCPProtocol() :
   device(nullptr),
@@ -25,9 +26,8 @@ TCPProtocol::~TCPProtocol() {
 bool TCPProtocol::begin(Device* device, RS485* rs485) {
   this->device = device;
   this->rs485 = rs485;
-  
   if (!this->device || !this->rs485) {
-    Serial.println("TCPProtocol: Invalid device or rs485");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid device or rs485");
     return false;
   }
   
@@ -80,12 +80,12 @@ void TCPProtocol::handle() {
 
 bool TCPProtocol::sendData(const uint8_t* data, size_t length) {
   if (!data || length == 0) {
-    Serial.println("TCPProtocol: Invalid data or length");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid data or length");
     return false;
   }
   
   if (length > MAX_PACKET_SIZE) {
-    Serial.println("TCPProtocol: Data too large");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Data too large");
     return false;
   }
   
@@ -105,7 +105,7 @@ bool TCPProtocol::available() {
 
 int TCPProtocol::receiveData(uint8_t* buffer, size_t bufferSize) {
   if (!buffer || bufferSize == 0) {
-    Serial.println("TCPProtocol: Invalid buffer or size");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid buffer or size");
     return -1;
   }
   
@@ -156,6 +156,7 @@ bool TCPProtocol::isConnectionTimedOut() {
 
 uint16_t TCPProtocol::calculateChecksum(const uint8_t* data, size_t length) {
   if (!data || length == 0) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid data or length for checksum");
     return 0;
   }
   
@@ -169,12 +170,13 @@ uint16_t TCPProtocol::calculateChecksum(const uint8_t* data, size_t length) {
 
 bool TCPProtocol::sendPacket(const uint8_t* data, size_t length) {
   if (!data || length == 0 || length > MAX_PACKET_SIZE) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid data, length or data too large for packet");
     return false;
   }
   
   // 检查连接状态
   if (!client.connected()) {
-    Serial.println("TCPProtocol: Client not connected");
+    REPORT_ERROR(ERROR_TCP_CONNECTION_FAILED, "TCPProtocol", "Client not connected");
     return false;
   }
   
@@ -186,14 +188,14 @@ bool TCPProtocol::sendPacket(const uint8_t* data, size_t length) {
   // 发送头部
   size_t headerSent = client.write((uint8_t*)&header, PACKET_HEADER_SIZE);
   if (headerSent != PACKET_HEADER_SIZE) {
-    Serial.println("TCPProtocol: Failed to send packet header");
+    REPORT_ERROR(ERROR_TCP_SEND_FAILED, "TCPProtocol", "Failed to send packet header");
     return false;
   }
   
   // 发送数据
   size_t dataSent = client.write(data, length);
   if (dataSent != length) {
-    Serial.println("TCPProtocol: Failed to send packet data");
+    REPORT_ERROR(ERROR_TCP_SEND_FAILED, "TCPProtocol", "Failed to send packet data");
     return false;
   }
   
@@ -205,11 +207,13 @@ bool TCPProtocol::sendPacket(const uint8_t* data, size_t length) {
 
 int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
   if (!buffer || bufferSize == 0) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "TCPProtocol", "Invalid buffer or size for packet reception");
     return -1;
   }
   
   // 检查连接状态
   if (!client.connected()) {
+    REPORT_ERROR(ERROR_TCP_CONNECTION_FAILED, "TCPProtocol", "Client not connected for packet reception");
     return -1;
   }
   
@@ -222,19 +226,19 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
   PacketHeader header;
   size_t headerRead = client.readBytes((uint8_t*)&header, PACKET_HEADER_SIZE);
   if (headerRead != PACKET_HEADER_SIZE) {
-    Serial.println("TCPProtocol: Failed to read packet header");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "TCPProtocol", "Failed to read packet header");
     return -1;
   }
   
   // 检查数据包长度是否有效
   if (header.length == 0 || header.length > MAX_PACKET_SIZE) {
-    Serial.println("TCPProtocol: Invalid packet length");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "TCPProtocol", "Invalid packet length");
     return -1;
   }
   
   // 检查缓冲区大小是否足够
   if (header.length > bufferSize) {
-    Serial.println("TCPProtocol: Buffer too small for packet data");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "TCPProtocol", "Buffer too small for packet data");
     return -1;
   }
   
@@ -248,14 +252,14 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
   // 读取数据
   size_t dataRead = client.readBytes(buffer, header.length);
   if (dataRead != header.length) {
-    Serial.println("TCPProtocol: Failed to read packet data");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "TCPProtocol", "Failed to read packet data");
     return -1;
   }
   
   // 验证校验和
   uint16_t calculatedChecksum = calculateChecksum(buffer, header.length);
   if (calculatedChecksum != header.checksum) {
-    Serial.println("TCPProtocol: Checksum mismatch");
+    REPORT_ERROR(ERROR_TCP_RECEIVE_FAILED, "TCPProtocol", "Checksum mismatch");
     return -1;
   }
   

@@ -1,5 +1,6 @@
 #include "wifi_manager.h"
 #include <ESP8266mDNS.h>
+#include "error_handler.h"
 
 // 静态成员变量，用于在静态事件处理函数中访问实例
 static WiFiManager* g_wifiManagerInstance = nullptr;
@@ -25,9 +26,8 @@ WiFiManager::~WiFiManager() {
 bool WiFiManager::begin(ConfigManager* configManager, Device* device) {
   this->configManager = configManager;
   this->device = device;
-  
   if (!this->configManager || !this->device) {
-    Serial.println("WiFiManager: Invalid configManager or device");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid configManager or device");
     return false;
   }
   
@@ -48,7 +48,7 @@ bool WiFiManager::begin(ConfigManager* configManager, Device* device) {
 
 bool WiFiManager::connect() {
   if (!configManager || !device) {
-    Serial.println("WiFiManager: Not initialized");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
     return false;
   }
   
@@ -62,7 +62,7 @@ bool WiFiManager::connect() {
   
   // 检查SSID是否有效
   if (networkConfig.ssid.length() == 0) {
-    Serial.println("WiFiManager: Invalid SSID");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid SSID");
     updateConnectionStatus(WIFI_CONNECTION_FAILED);
     return false;
   }
@@ -90,7 +90,7 @@ bool WiFiManager::connect() {
 
 bool WiFiManager::startAP() {
   if (!configManager || !device) {
-    Serial.println("WiFiManager: Not initialized");
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
     return false;
   }
   

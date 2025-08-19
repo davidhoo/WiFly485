@@ -1,5 +1,6 @@
 #include "rs485.h"
 #include <Arduino.h>
+#include "error_handler.h"
 
 // 构造函数，初始化引脚配置
 RS485::RS485(uint8_t rtsPin, uint8_t rxPin, uint8_t txPin) 
@@ -26,6 +27,7 @@ bool RS485::begin(unsigned long baudRate) {
 bool RS485::send(const uint8_t* data, size_t length) {
     if (data == nullptr || length == 0) {
         _errorStatus |= ERROR_INVALID_DATA;
+        REPORT_ERROR(ERROR_RS485_INVALID_DATA, "RS485", "Invalid data or length");
         return false;
     }
     
@@ -47,6 +49,7 @@ bool RS485::send(const uint8_t* data, size_t length) {
     // 检查是否所有数据都已发送
     if (sent != length) {
         _errorStatus |= ERROR_COMMUNICATION_FAILURE;
+        REPORT_ERROR(ERROR_RS485_COMMUNICATION_FAILED, "RS485", "Failed to send all data");
         return false;
     }
     
@@ -57,6 +60,7 @@ bool RS485::send(const uint8_t* data, size_t length) {
 int RS485::receive(uint8_t* buffer, size_t bufferSize) {
     if (buffer == nullptr || bufferSize == 0) {
         _errorStatus |= ERROR_INVALID_DATA;
+        REPORT_ERROR(ERROR_RS485_INVALID_DATA, "RS485", "Invalid buffer or size");
         return -1;
     }
     
@@ -71,6 +75,7 @@ int RS485::receive(uint8_t* buffer, size_t bufferSize) {
     // 如果缓冲区满了但还有数据，标记缓冲区溢出错误
     if (Serial1.available() && bytesRead == bufferSize) {
         _errorStatus |= ERROR_BUFFER_OVERFLOW;
+        REPORT_ERROR(ERROR_RS485_BUFFER_OVERFLOW, "RS485", "Receive buffer overflow");
     }
     
     return bytesRead;

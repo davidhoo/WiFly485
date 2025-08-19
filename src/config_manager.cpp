@@ -2,6 +2,7 @@
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
 #include <FS.h>
+#include "error_handler.h"
 
 ConfigManager::ConfigManager() {
   // 初始化默认配置
@@ -15,14 +16,14 @@ ConfigManager::~ConfigManager() {
 bool ConfigManager::begin() {
   // 挂载SPIFFS
   if (!mountSPIFFS()) {
-    Serial.println("Failed to mount SPIFFS");
+    REPORT_ERROR(ERROR_FILESYSTEM_MOUNT_FAILED, "ConfigManager", "Failed to mount SPIFFS");
     return false;
   }
   
   // 如果配置文件存在，加载配置
   if (configFileExists()) {
     if (!loadConfig()) {
-      Serial.println("Failed to load config, using default config");
+      REPORT_ERROR(ERROR_CONFIG_LOAD_FAILED, "ConfigManager", "Failed to load config, using default config");
       generateDefaultConfig();
     }
   } else {
@@ -34,7 +35,7 @@ bool ConfigManager::begin() {
   
   // 验证配置
   if (!validateConfig()) {
-    Serial.println("Invalid config, using default config");
+    REPORT_ERROR(ERROR_CONFIG_INVALID, "ConfigManager", "Invalid config, using default config");
     generateDefaultConfig();
   }
   
@@ -58,7 +59,7 @@ void ConfigManager::unmountSPIFFS() {
 bool ConfigManager::loadConfig() {
   // 检查配置文件是否存在
   if (!configFileExists()) {
-    Serial.println("Config file does not exist");
+    REPORT_ERROR(ERROR_FILE_NOT_FOUND, "ConfigManager", "Config file does not exist");
     return false;
   }
   
@@ -68,7 +69,11 @@ bool ConfigManager::loadConfig() {
 
 bool ConfigManager::saveConfig() {
   // 写入配置文件
-  return writeConfigFile();
+  if (!writeConfigFile()) {
+    REPORT_ERROR(ERROR_CONFIG_SAVE_FAILED, "ConfigManager", "Failed to write config file");
+    return false;
+  }
+  return true;
 }
 
 void ConfigManager::generateDefaultConfig() {
@@ -218,7 +223,7 @@ bool ConfigManager::parseConfigFile() {
   // 打开配置文件
   File configFile = SPIFFS.open(CONFIG_FILE_PATH, "r");
   if (!configFile) {
-    Serial.println("Failed to open config file for reading");
+    REPORT_ERROR(ERROR_FILE_READ_FAILED, "ConfigManager", "Failed to open config file for reading");
     return false;
   }
   
@@ -239,7 +244,7 @@ bool ConfigManager::parseConfigFile() {
   DynamicJsonDocument doc(4096);
   DeserializationError error = deserializeJson(doc, buf.get());
   if (error) {
-    Serial.println("Failed to parse config file");
+    REPORT_ERROR(ERROR_CONFIG_LOAD_FAILED, "ConfigManager", "Failed to parse config file");
     return false;
   }
   
@@ -307,13 +312,13 @@ bool ConfigManager::writeConfigFile() {
   // 打开配置文件进行写入
   File configFile = SPIFFS.open(CONFIG_FILE_PATH, "w");
   if (!configFile) {
-    Serial.println("Failed to open config file for writing");
+    REPORT_ERROR(ERROR_FILE_WRITE_FAILED, "ConfigManager", "Failed to open config file for writing");
     return false;
   }
   
   // 序列化JSON到文件
   if (serializeJson(doc, configFile) == 0) {
-    Serial.println("Failed to write config file");
+    REPORT_ERROR(ERROR_FILE_WRITE_FAILED, "ConfigManager", "Failed to write config file");
     configFile.close();
     return false;
   }
