@@ -83,11 +83,12 @@ private:
   void onWiFiEvent(WiFiEvent_t event);
   void updateConnectionStatus(WiFiConnectionStatus status);
   bool isConnectionTimedOut();
+  void checkDeviceTimeout();
   
   // 重连相关
   static const unsigned long RECONNECT_INTERVAL = 30000; // 30秒重连间隔
   static const unsigned long CONNECTION_TIMEOUT = 15000; // 15秒连接超时
-  static const unsigned long MASTER_CONNECTION_TIMEOUT = 6000; // 60秒主设备连接超时
+  static const unsigned long APMODE_CONNECTION_TIMEOUT = 6000; // 60秒主设备连接超时
 };
 
 #endif // WIFI_MANAGER_H

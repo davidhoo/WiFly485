@@ -196,29 +196,8 @@ void WiFiManager::handle() {
   } else if (connectionStatus == WIFI_DISCONNECTED && device) {
     // 主设备或从设备60秒超时检测
     
-    if (device->isMaster()) {
-      // 主设备超时检测
-      if (masterStartTime == 0) {
-        masterStartTime = millis();
-      }
-      
-      if (!masterTimeoutChecked && (millis() - masterStartTime) > MASTER_CONNECTION_TIMEOUT) {
-        Serial.println("WiFiManager: Master connection timeout, connecting to router WiFi");
-        masterTimeoutChecked = true;
-        connectToRouterWiFi(); // 连接到指定的路由器WiFi
-      }
-    } else {
-      // 从设备超时检测
-      if (slaveStartTime == 0) {
-        slaveStartTime = millis();
-      }
-      
-      if (!slaveTimeoutChecked && (millis() - slaveStartTime) > MASTER_CONNECTION_TIMEOUT) {
-        Serial.println("WiFiManager: Slave connection timeout, connecting to router WiFi");
-        slaveTimeoutChecked = true;
-        connectToRouterWiFi(); // 连接到指定的路由器WiFi
-      }
-    }
+    // 检查设备连接超时
+    checkDeviceTimeout();
   }
   
   // 如果AP模式未启用，启动AP模式（主设备和从设备都启动AP）
@@ -281,6 +260,25 @@ void WiFiManager::updateConnectionStatus(WiFiConnectionStatus status) {
 
 bool WiFiManager::isConnectionTimedOut() {
   return (millis() - connectionStartTime) > CONNECTION_TIMEOUT;
+}
+
+void WiFiManager::checkDeviceTimeout() {
+  // 使用引用避免重复代码
+  unsigned long& startTime = device->isMaster() ? masterStartTime : slaveStartTime;
+  bool& timeoutChecked = device->isMaster() ? masterTimeoutChecked : slaveTimeoutChecked;
+  
+  // 设置开始时间
+  if (startTime == 0) {
+    startTime = millis();
+  }
+  
+  // 检查超时
+  if (!timeoutChecked && (millis() - startTime) > APMODE_CONNECTION_TIMEOUT) {
+    Serial.printf("WiFiManager: %s connection timeout, connecting to router WiFi\n",
+                   device->isMaster() ? "Master" : "Slave");
+    timeoutChecked = true;
+    connectToRouterWiFi(); // 连接到指定的路由器WiFi
+  }
 }
 
 // 静态WiFi事件处理函数
