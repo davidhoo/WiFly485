@@ -66,6 +66,10 @@ private:
   unsigned long connectionStartTime;
   bool apModeEnabled;
   
+  // 重试相关变量
+  unsigned int retryCount;
+  unsigned long currentReconnectInterval;
+  
   // 超时跟踪变量
   unsigned long masterStartTime;
   bool masterTimeoutChecked;
