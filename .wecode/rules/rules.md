@@ -67,7 +67,7 @@
    - 自动合并：
      ```bash
      # 启用自动合并（当满足合并条件时）
-     gh pr merge --auto --squash
+     gh pr merge --auto --merge --delete-branch
      
    
      
