@@ -23,13 +23,8 @@ graph TB
     end
     
     Master <-->|TCP 8888<br>数据传输| Slave
-    Master <-->|TCP 8889<br>配置同步| Slave
     
-    subgraph "管理界面"
-        WebUI[Web管理界面]
-        Master --> WebUI
-        Slave --> WebUI
-    end
+    
 ```
 
 ## 2. 软件模块架构
