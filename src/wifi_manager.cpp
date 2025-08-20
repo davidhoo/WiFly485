@@ -69,10 +69,6 @@ bool WiFiManager::connect() {
   // 使用默认网络配置
   const char* ssid = DEFAULT_SSID;
   const char* password = DEFAULT_PASSWORD;
-  bool dhcpEnabled = DEFAULT_DHCP_ENABLED;
-  const char* ip = DEFAULT_IP;
-  const char* gateway = DEFAULT_GATEWAY;
-  const char* subnet = DEFAULT_SUBNET;
   
   // 检查SSID是否有效
   if (strlen(ssid) == 0) {
@@ -80,17 +76,6 @@ bool WiFiManager::connect() {
     updateConnectionStatus(WIFI_CONNECTION_FAILED);
     return false;
   }
-  
-  // 配置静态IP（如果需要）
-  if (!dhcpEnabled) {
-    IPAddress ipAddr, gatewayAddr, subnetAddr;
-    if (ipAddr.fromString(ip) &&
-        gatewayAddr.fromString(gateway) &&
-        subnetAddr.fromString(subnet)) {
-      WiFi.config(ipAddr, gatewayAddr, subnetAddr);
-    }
-  }
-  
   // 连接到WiFi网络
   Serial.printf("WiFiManager: Connecting to %s\n", ssid);
   WiFi.begin(ssid, password);
@@ -109,10 +94,6 @@ bool WiFiManager::connectToRouterWiFi() {
   // 使用默认网络配置
   const char* ssid = DEFAULT_SSID;
   const char* password = DEFAULT_PASSWORD;
-  bool dhcpEnabled = DEFAULT_DHCP_ENABLED;
-  const char* ip = DEFAULT_IP;
-  const char* gateway = DEFAULT_GATEWAY;
-  const char* subnet = DEFAULT_SUBNET;
   
   // 检查SSID是否有效
   if (strlen(ssid) == 0) {
@@ -124,17 +105,6 @@ bool WiFiManager::connectToRouterWiFi() {
   // 更新连接状态
   updateConnectionStatus(WIFI_CONNECTING);
   connectionStartTime = millis();
-  
-  // 配置静态IP（如果需要）
-  if (!dhcpEnabled) {
-    IPAddress ipAddr, gatewayAddr, subnetAddr;
-    if (ipAddr.fromString(ip) &&
-        gatewayAddr.fromString(gateway) &&
-        subnetAddr.fromString(subnet)) {
-      WiFi.config(ipAddr, gatewayAddr, subnetAddr);
-    }
-  }
-  
   // 连接到WiFi网络
   Serial.printf("WiFiManager: Connecting to router WiFi %s\n", ssid);
   WiFi.begin(ssid, password);

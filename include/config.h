@@ -10,10 +10,6 @@
 // 网络配置默认值
 #define DEFAULT_SSID "David的iPhone"
 #define DEFAULT_PASSWORD "11111111"
-#define DEFAULT_DHCP_ENABLED true
-#define DEFAULT_IP "0.0.0.0"
-#define DEFAULT_GATEWAY "0.0.0.0"
-#define DEFAULT_SUBNET "0.0.0.0"
 
 // RS485配置默认值
 #define DEFAULT_BAUD_RATE 9600
