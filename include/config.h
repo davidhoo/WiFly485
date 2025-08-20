@@ -21,7 +21,6 @@
 #define DEFAULT_MASTER_NAME "WiFly485_Master"
 #define DEFAULT_SLAVE_NAME "WiFly485_Slave"
 #define DEFAULT_MASTER_TCP_PORT 8888
-#define HEARTBEAT_PORT 8890
 
 // 系统配置
 

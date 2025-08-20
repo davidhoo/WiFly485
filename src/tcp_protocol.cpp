@@ -35,10 +35,10 @@ bool TCPProtocol::begin(Device* device, RS485* rs485, MDNSService* mdnsService) 
   
   // 根据设备角色初始化服务器或客户端
   if (this->device->isMaster()) {
-    // 主设备创建服务器，监听8888端口
-    server = new WiFiServer(8888);
+    // 主设备创建服务器，监听DEFAULT_MASTER_TCP_PORT端口
+    server = new WiFiServer(DEFAULT_MASTER_TCP_PORT);
     server->begin();
-    Serial.println("TCPProtocol: Server started on port 8888");
+    Serial.printf("TCPProtocol: Server started on port %d\n", DEFAULT_MASTER_TCP_PORT);
   } else {
     // 从设备不需要创建服务器
     server = nullptr;
@@ -407,7 +407,7 @@ bool TCPProtocol::discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort) {
 bool TCPProtocol::connectToMaster() {
   // 通过mDNS查找主设备IP地址
   IPAddress masterIP;
-  uint16_t masterPort = 8888; // 默认端口
+  uint16_t masterPort = DEFAULT_MASTER_TCP_PORT; // 默认端口
   
   Serial.println("TCPProtocol: Discovering master via mDNS...");
   if (!discoverMasterIP(masterIP, masterPort)) {

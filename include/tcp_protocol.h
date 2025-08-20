@@ -8,6 +8,7 @@
 #include "device.h"
 #include "rs485.h"
 #include "mdns_service.h"
+#include "config.h"
 
 // 前向声明
 class Heartbeat;
