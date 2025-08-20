@@ -39,6 +39,9 @@ public:
   
   // 设置设备名称
   void setName(const String& name);
+  
+  // 获取主设备IP地址
+  String getMasterIP();
 
 private:
   DeviceRole role;

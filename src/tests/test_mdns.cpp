@@ -2,32 +2,26 @@
 #include "mdns_service.h"
 #include "device.h"
 #include "wifi_manager.h"
-#include "config_manager.h"
 
 // 测试用的mDNS服务实例
 static MDNSService* testMDNSService = nullptr;
 static Device* testDevice = nullptr;
 static WiFiManager* testWiFiManager = nullptr;
-static ConfigManager* testConfigManager = nullptr;
 
 // 测试mDNS服务初始化
 void testMDNSServiceInitialization() {
   Serial.println("Testing MDNS Service Initialization...");
   
   // 创建测试实例
+  // 创建测试实例
   testDevice = new Device();
-  testConfigManager = new ConfigManager();
   testWiFiManager = new WiFiManager();
   
   // 初始化设备
   testDevice->begin();
   
-  // 初始化配置管理器
-  testConfigManager->begin();
-  
   // 初始化WiFi管理器
-  testWiFiManager->begin(testConfigManager, testDevice);
-  
+  testWiFiManager->begin(testDevice);
   // 创建mDNS服务
   testMDNSService = new MDNSService();
   
@@ -132,16 +126,9 @@ void runMDNSTests() {
     delete testWiFiManager;
     testWiFiManager = nullptr;
   }
-  
-  if (testConfigManager) {
-    delete testConfigManager;
-    testConfigManager = nullptr;
-  }
-  
   if (testDevice) {
     delete testDevice;
     testDevice = nullptr;
-  }
-  
   Serial.println("All MDNS Tests completed!");
+}
 }

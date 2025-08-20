@@ -2,7 +2,6 @@
 #include "tcp_protocol.h"
 #include "device.h"
 #include "rs485.h"
-#include "config_manager.h"
 #include "mdns_service.h"
 #include <ESP8266WiFi.h>
 

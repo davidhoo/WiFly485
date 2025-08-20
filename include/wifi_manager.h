@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
-#include "config_manager.h"
 #include "device.h"
 
 // WiFi连接状态枚举
@@ -21,7 +20,7 @@ public:
   ~WiFiManager();
 
   // 初始化WiFi管理器
-  bool begin(ConfigManager* configManager, Device* device);
+  bool begin(Device* device);
 
   // 连接到WiFi网络
   bool connect();
@@ -58,7 +57,6 @@ public:
   void setConnectionStatusCallback(ConnectionStatusCallback callback);
 
 private:
-  ConfigManager* configManager;
   Device* device;
   
   WiFiConnectionStatus connectionStatus;

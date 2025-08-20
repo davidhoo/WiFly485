@@ -54,6 +54,10 @@ void Device::setName(const String& name) {
   this->name = name;
 }
 
+String Device::getMasterIP() {
+  return DEFAULT_MASTER_IP;
+}
+
 void Device::initializeRole() {
   // 根据编译时定义的宏来确定设备角色
 #ifdef DEVICE_ROLE_MASTER

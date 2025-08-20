@@ -1,11 +1,9 @@
 #include "test_framework.h"
 #include "wifi_manager.h"
-#include "config_manager.h"
 #include "device.h"
 
 // 测试用的WiFi管理器实例
 static WiFiManager* testWiFiManager = nullptr;
-static ConfigManager* testConfigManager = nullptr;
 static Device* testDevice = nullptr;
 
 // WiFi连接状态回调函数
@@ -18,20 +16,18 @@ void testWiFiManagerInitialization() {
   Serial.println("Testing WiFi Manager Initialization...");
   
   // 创建测试实例
-  testConfigManager = new ConfigManager();
   testDevice = new Device();
   
   // 初始化设备
   testDevice->begin();
   
   // 初始化配置管理器
-  testConfigManager->begin();
   
   // 创建WiFi管理器
   testWiFiManager = new WiFiManager();
   
   // 测试初始化
-  bool result = testWiFiManager->begin(testConfigManager, testDevice);
+  bool result = testWiFiManager->begin(testDevice);
   ASSERT_TRUE(result);
   
   // 检查初始状态
@@ -139,10 +135,6 @@ void runWiFiTests() {
     testWiFiManager = nullptr;
   }
   
-  if (testConfigManager) {
-    delete testConfigManager;
-    testConfigManager = nullptr;
-  }
   
   if (testDevice) {
     delete testDevice;

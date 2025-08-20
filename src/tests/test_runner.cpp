@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "device.h"
 #include "logger.h"
-#include "config_manager.h"
 #include "test_framework.h"
 #include "wifi_manager.h"
 #include "mdns_service.h"
@@ -11,7 +10,6 @@
 // 全局变量
 Device device;
 extern Logger logger;
-ConfigManager configManager;
 LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
 LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
 LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
@@ -94,7 +92,6 @@ void showTestMenu() {
   Serial.println("1 - 设备角色测试");
   Serial.println("2 - 设备名称测试");
   Serial.println("3 - 日志系统测试");
-  Serial.println("4 - 配置管理器测试");
   Serial.println("5 - WiFi管理器测试");
   Serial.println("6 - mDNS服务测试");
   Serial.println("7 - RS485通信测试");
@@ -133,38 +130,6 @@ TEST(Logger) {
   LOG_I("Test", "日志系统测试完成");
 }
 
-TEST(ConfigManager) {
-  LOG_I("Test", "开始配置管理器测试");
-  
-  // 测试获取配置
-  NetworkConfig networkConfig = configManager.getNetworkConfig();
-  RS485Config rs485Config = configManager.getRS485Config();
-  DeviceConfig deviceConfig = configManager.getDeviceConfig();
-  
-  Serial.printf("网络SSID: %s\n", networkConfig.ssid.c_str());
-  Serial.printf("RS485波特率: %d\n", rs485Config.baudRate);
-  Serial.printf("设备名称: %s\n", deviceConfig.name.c_str());
-  Serial.printf("设备角色: %s\n", deviceConfig.role.c_str());
-  
-  // 测试配置验证
-  if (configManager.validateConfig()) {
-    Serial.println("配置验证通过");
-  } else {
-    Serial.println("配置验证失败");
-  }
-  
-  // 测试配置文件是否存在
-  if (configManager.configFileExists()) {
-    Serial.println("配置文件存在");
-  } else {
-    Serial.println("配置文件不存在");
-  }
-  
-  ASSERT_TRUE(configManager.validateConfig() || !configManager.validateConfig()); // 总是通过的断言，仅作示例
-  
-  LOG_I("Test", "配置管理器测试完成");
-}
-
 void setup() {
   // 初始化串口
   Serial.begin(115200);
@@ -189,19 +154,10 @@ void setup() {
   
   LOG_I("Test", "设备初始化成功");
   
-  // 初始化配置管理器
-  if (!configManager.begin()) {
-    LOG_E("Test", "配置管理器初始化失败");
-    return;
-  }
-  
-  LOG_I("Test", "配置管理器初始化成功");
-  
   // 注册测试 (使用 RUN_TEST 宏)
   RUN_TEST(DeviceRole);
   RUN_TEST(DeviceName);
   RUN_TEST(Logger);
-  RUN_TEST(ConfigManager);
   
   // 注册WiFi测试
   testFramework.registerTest(runWiFiTests, "WiFiManager");
@@ -259,9 +215,6 @@ void runSelectedTest(int testNumber) {
       break;
     case 3:
       test_Logger();
-      break;
-    case 4:
-      test_ConfigManager();
       break;
     case 5:
       runWiFiTests();
@@ -329,10 +282,6 @@ void loop() {
     } else if (input == "3") {
       Serial.println("运行日志系统测试...");
       runSelectedTest(3);
-      showTestMenu();
-    } else if (input == "4") {
-      Serial.println("运行配置管理器测试...");
-      runSelectedTest(4);
       showTestMenu();
     } else if (input == "5") {
       Serial.println("运行WiFi管理器测试...");

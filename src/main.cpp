@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "device.h"
 #include "logger.h"
-#include "config_manager.h"
 #include "wifi_manager.h"
 #include "mdns_service.h"
 #include "rs485.h"
@@ -11,7 +10,6 @@
 
 // 全局变量
 Device device;
-ConfigManager configManager;
 WiFiManager wifiManager;
 MDNSService mdnsService;
 RS485 rs485;
@@ -52,16 +50,8 @@ void setup()
   
   LOG_I("Main", "设备初始化成功，角色: %s", device.getRoleString().c_str());
   
-  // 初始化配置管理器
-  if (!configManager.begin()) {
-    LOG_E("Main", "配置管理器初始化失败");
-    return;
-  }
-  
-  LOG_I("Main", "配置管理器初始化成功");
-  
   // 初始化WiFi管理器
-  if (!wifiManager.begin(&configManager, &device)) {
+  if (!wifiManager.begin(&device)) {
     LOG_E("Main", "WiFi管理器初始化失败");
     return;
   }
@@ -77,13 +67,12 @@ void setup()
   LOG_I("Main", "mDNS服务初始化成功");
   
   // 初始化RS485通信
-  RS485Config rs485Config = configManager.getRS485Config();
-  if (!rs485.begin(rs485Config.baudRate)) {
+  if (!rs485.begin(DEFAULT_BAUD_RATE)) {
     LOG_E("Main", "RS485初始化失败");
     return;
   }
   
-  LOG_I("Main", "RS485初始化成功，波特率: %d", rs485Config.baudRate);
+  LOG_I("Main", "RS485初始化成功，波特率: %d", DEFAULT_BAUD_RATE);
   
   // 初始化TCP协议
   if (!tcpProtocol.begin(&device, &rs485, &mdnsService)) {  // 修改函数调用，传递mDNS服务实例

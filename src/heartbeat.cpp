@@ -1,6 +1,5 @@
 #include "heartbeat.h"
 #include "tcp_protocol.h"
-#include "config_manager.h"
 #include "config.h"
 #include "logger.h"
 
@@ -88,18 +87,16 @@ bool Heartbeat::sendHeartbeat() {
     
     // 确保已连接到主设备
     // 确保已连接到主设备
+    // 确保已连接到主设备
     if (!_client || !_client->connected()) {
         // 尝试连接到主设备
-        ConfigManager configManager;
-        MasterConfig masterConfig = configManager.getMasterConfig();
-        String masterIP = masterConfig.ip;
+        String masterIP = _device->getMasterIP();
         
         if (!_client->connect(masterIP.c_str(), HEARTBEAT_PORT)) {
             LOG_E("Heartbeat", "Failed to connect to master at %s", masterIP.c_str());
             return false;
         }
     }
-    // 发送心跳包
     _client->print("PING");
     
     // 等待响应
@@ -147,12 +144,9 @@ bool Heartbeat::reconnect() {
         _client->stop();
         delete _client;
     }
-    
     _client = new WiFiClient();
     
-    ConfigManager configManager;
-    MasterConfig masterConfig = configManager.getMasterConfig();
-    String masterIP = masterConfig.ip;
+    String masterIP = _device->getMasterIP();
     
     if (_client->connect(masterIP.c_str(), HEARTBEAT_PORT)) {
         LOG_I("Heartbeat", "Reconnected to master at %s", masterIP.c_str());
@@ -162,4 +156,4 @@ bool Heartbeat::reconnect() {
         LOG_E("Heartbeat", "Failed to reconnect to master at %s", masterIP.c_str());
         return false;
     }
-}
+    }

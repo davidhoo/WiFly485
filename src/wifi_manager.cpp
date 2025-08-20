@@ -7,7 +7,6 @@
 static WiFiManager* g_wifiManagerInstance = nullptr;
 
 WiFiManager::WiFiManager() :
-  configManager(nullptr),
   device(nullptr),
   connectionStatus(WIFI_DISCONNECTED),
   lastConnectionAttempt(0),
@@ -30,11 +29,10 @@ WiFiManager::~WiFiManager() {
   disconnect();
 }
 
-bool WiFiManager::begin(ConfigManager* configManager, Device* device) {
-  this->configManager = configManager;
+bool WiFiManager::begin(Device* device) {
   this->device = device;
-  if (!this->configManager || !this->device) {
-    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid configManager or device");
+  if (!this->device) {
+    REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid device");
     return false;
   }
   
@@ -54,7 +52,7 @@ bool WiFiManager::begin(ConfigManager* configManager, Device* device) {
 }
 
 bool WiFiManager::connect() {
-  if (!configManager || !device) {
+  if (!device) {
     REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
     return false;
   }
@@ -64,50 +62,60 @@ bool WiFiManager::connect() {
     return true;
   }
   
-  // 获取网络配置
-  NetworkConfig networkConfig = configManager->getNetworkConfig();
+  // 更新连接状态
+  updateConnectionStatus(WIFI_CONNECTING);
+  connectionStartTime = millis();
+  
+  // 使用默认网络配置
+  const char* ssid = DEFAULT_SSID;
+  const char* password = DEFAULT_PASSWORD;
+  bool dhcpEnabled = DEFAULT_DHCP_ENABLED;
+  const char* ip = DEFAULT_IP;
+  const char* gateway = DEFAULT_GATEWAY;
+  const char* subnet = DEFAULT_SUBNET;
   
   // 检查SSID是否有效
-  if (networkConfig.ssid.length() == 0) {
+  if (strlen(ssid) == 0) {
     REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid SSID");
     updateConnectionStatus(WIFI_CONNECTION_FAILED);
     return false;
   }
   
-  // 更新连接状态
-  updateConnectionStatus(WIFI_CONNECTING);
-  connectionStartTime = millis();
-  
   // 配置静态IP（如果需要）
-  if (!networkConfig.dhcpEnabled) {
-    IPAddress ip, gateway, subnet;
-    if (ip.fromString(networkConfig.ip) && 
-        gateway.fromString(networkConfig.gateway) && 
-        subnet.fromString(networkConfig.subnet)) {
-      WiFi.config(ip, gateway, subnet);
+  if (!dhcpEnabled) {
+    IPAddress ipAddr, gatewayAddr, subnetAddr;
+    if (ipAddr.fromString(ip) &&
+        gatewayAddr.fromString(gateway) &&
+        subnetAddr.fromString(subnet)) {
+      WiFi.config(ipAddr, gatewayAddr, subnetAddr);
     }
   }
   
   // 连接到WiFi网络
-  Serial.printf("WiFiManager: Connecting to %s\n", networkConfig.ssid.c_str());
-  WiFi.begin(networkConfig.ssid.c_str(), networkConfig.password.c_str());
+  Serial.printf("WiFiManager: Connecting to %s\n", ssid);
+  WiFi.begin(ssid, password);
   
   return true;
 }
 
 bool WiFiManager::connectToRouterWiFi() {
   // 检查是否已初始化
-  if (!configManager || !device) {
+  if (!device) {
     REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
     updateConnectionStatus(WIFI_CONNECTION_FAILED);
     return false;
   }
   
-  // 获取网络配置
-  NetworkConfig networkConfig = configManager->getNetworkConfig();
+  // 使用默认网络配置
+  const char* ssid = DEFAULT_SSID;
+  const char* password = DEFAULT_PASSWORD;
+  bool dhcpEnabled = DEFAULT_DHCP_ENABLED;
+  const char* ip = DEFAULT_IP;
+  const char* gateway = DEFAULT_GATEWAY;
+  const char* subnet = DEFAULT_SUBNET;
   
   // 检查SSID是否有效
-  if (networkConfig.ssid.length() == 0) {
+  if (strlen(ssid) == 0) {
     REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Invalid SSID in config");
     updateConnectionStatus(WIFI_CONNECTION_FAILED);
     return false;
@@ -118,18 +126,18 @@ bool WiFiManager::connectToRouterWiFi() {
   connectionStartTime = millis();
   
   // 配置静态IP（如果需要）
-  if (!networkConfig.dhcpEnabled) {
-    IPAddress ip, gateway, subnet;
-    if (ip.fromString(networkConfig.ip) &&
-        gateway.fromString(networkConfig.gateway) &&
-        subnet.fromString(networkConfig.subnet)) {
-      WiFi.config(ip, gateway, subnet);
+  if (!dhcpEnabled) {
+    IPAddress ipAddr, gatewayAddr, subnetAddr;
+    if (ipAddr.fromString(ip) &&
+        gatewayAddr.fromString(gateway) &&
+        subnetAddr.fromString(subnet)) {
+      WiFi.config(ipAddr, gatewayAddr, subnetAddr);
     }
   }
   
   // 连接到WiFi网络
-  Serial.printf("WiFiManager: Connecting to router WiFi %s\n", networkConfig.ssid.c_str());
-  WiFi.begin(networkConfig.ssid.c_str(), networkConfig.password.c_str());
+  Serial.printf("WiFiManager: Connecting to router WiFi %s\n", ssid);
+  WiFi.begin(ssid, password);
   
   // 等待连接结果（最多等待10秒）
   unsigned long startTime = millis();
@@ -151,16 +159,16 @@ bool WiFiManager::connectToRouterWiFi() {
 }
 
 bool WiFiManager::startAP() {
-  if (!configManager || !device) {
+  if (!device) {
     REPORT_ERROR(ERROR_INVALID_PARAMETER, "WiFiManager", "Not initialized");
     return false;
   }
   
-  // 获取设备配置
-  DeviceConfig deviceConfig = configManager->getDeviceConfig();
+  // 使用默认设备配置
+  const char* deviceName = device->isMaster() ? DEFAULT_MASTER_NAME : DEFAULT_SLAVE_NAME;
   
   // 生成AP名称和密码
-  String apName = deviceConfig.name + "_AP";
+  String apName = String(deviceName) + "_AP";
   String apPassword = "wifly485"; // 默认密码
   
   Serial.printf("WiFiManager: Starting AP %s\n", apName.c_str());

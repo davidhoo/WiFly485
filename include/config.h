@@ -27,10 +27,9 @@
 #define DEFAULT_MASTER_TCP_PORT 8888
 #define DEFAULT_SYNC_PORT 8889
 #define HEARTBEAT_PORT 8890
+#define DEFAULT_MASTER_IP "192.168.1.100"
 
 // 系统配置
-#define DEFAULT_CONFIG_FILE_PATH "/config.json"
-#define SPIFFS_MAX_SIZE 4096
 
 // LED配置
 #define LED_PIN 2  // GPIO2作为LED引脚
