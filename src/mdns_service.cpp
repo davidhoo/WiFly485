@@ -25,7 +25,7 @@ bool MDNSService::begin(Device* device, WiFiManager* wifiManager) {
     return false;
   }
   
-  // 根据设备角色设置服务名称
+  // 根据设备角色设置服务名称和主机名
   if (device->isMaster()) {
     serviceName = "wifly485-master";
     serviceInstanceName = device->getName() + "_master";
@@ -153,7 +153,15 @@ void MDNSService::updateServiceStatus(MDNSServiceStatus status) {
 
 bool MDNSService::setupMDNSService() {
   // 初始化mDNS
-  if (!MDNS.begin(serviceName.c_str())) {
+  // 根据需求文档，主机名应该是"wifly485-[角色]"
+  String hostname = "wifly485-";
+  if (device->isMaster()) {
+    hostname += "master";
+  } else {
+    hostname += "slave";
+  }
+  
+  if (!MDNS.begin(hostname.c_str())) {
     REPORT_ERROR(ERROR_MDNS_FAILED, "MDNSService", "Failed to start mDNS");
     return false;
   }

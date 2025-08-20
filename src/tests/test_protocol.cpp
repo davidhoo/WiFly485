@@ -3,11 +3,13 @@
 #include "device.h"
 #include "rs485.h"
 #include "config_manager.h"
+#include "mdns_service.h"
 #include <ESP8266WiFi.h>
 
 // 测试用的模拟设备和RS485
 static Device* testDevice = nullptr;
 static RS485* testRS485 = nullptr;
+static MDNSService* testMDNSService = nullptr;
 static TCPProtocol* tcpProtocol = nullptr;
 
 // 连接状态回调函数
@@ -27,15 +29,18 @@ void testTCPProtocolInitialization() {
   testDevice = new Device();
   testDevice->setRole(DEVICE_ROLE_MASTER_ENUM);
   testDevice->setName("TestMaster");
-  
   // 创建测试RS485
   testRS485 = new RS485();
   bool rs485Result = testRS485->begin(9600);
   ASSERT_TRUE(rs485Result);
   
+  // 创建测试mDNS服务
+  testMDNSService = new MDNSService();
+  
   // 创建TCP协议实例
   tcpProtocol = new TCPProtocol();
-  bool result = tcpProtocol->begin(testDevice, testRS485);
+  bool result = tcpProtocol->begin(testDevice, testRS485, testMDNSService);
+  ASSERT_TRUE(result);
   ASSERT_TRUE(result);
   
   // 设置连接状态回调
@@ -130,6 +135,11 @@ void runProtocolTests() {
   if (tcpProtocol) {
     delete tcpProtocol;
     tcpProtocol = nullptr;
+  }
+  
+  if (testMDNSService) {
+    delete testMDNSService;
+    testMDNSService = nullptr;
   }
   
   if (testRS485) {

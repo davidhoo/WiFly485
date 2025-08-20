@@ -8,7 +8,6 @@
  */
 
 // 测试LED指示系统的基本功能
-// 测试LED指示系统的基本功能
 TEST(led_basic) {
     LEDIndicator led(LED_PIN); // 使用GPIO2进行测试
     led.begin();
@@ -35,6 +34,7 @@ TEST(led_basic) {
     ASSERT_TRUE(led.getCurrentState() == LEDState::ON);
     ASSERT_TRUE(led.getCurrentPriority() == LEDPriority::PRIORITY_NORMAL);
 }
+
 // 测试LED状态模式
 TEST(led_states) {
     LEDIndicator led(LED_PIN); // 使用GPIO2进行测试
@@ -71,13 +71,6 @@ TEST(led_states) {
     
     led.setState(LEDState::BREATHING, LEDPriority::PRIORITY_NORMAL);
     ASSERT_TRUE(led.getCurrentState() == LEDState::BREATHING);
-    for (int i = 0; i < 50; i++) {
-        led.update();
-        delay(100); // 5秒延迟
-    }
-    
-    led.setState(LEDState::HEARTBEAT, LEDPriority::PRIORITY_NORMAL);
-    ASSERT_TRUE(led.getCurrentState() == LEDState::HEARTBEAT);
     for (int i = 0; i < 50; i++) {
         led.update();
         delay(100); // 5秒延迟
@@ -131,3 +124,16 @@ TEST(led_priority) {
     ASSERT_TRUE(led.getCurrentState() == LEDState::OFF);
 }
 
+// 测试错误状态模式
+TEST(led_error_pattern) {
+    LEDIndicator led(LED_PIN); // 使用GPIO2进行测试
+    led.begin();
+    
+    // 测试错误状态模式，保持一段时间以便观察
+    led.setState(LEDState::ERROR, LEDPriority::PRIORITY_HIGH);
+    ASSERT_TRUE(led.getCurrentState() == LEDState::ERROR);
+    for (int i = 0; i < 50; i++) {
+        led.update();
+        delay(100); // 5秒延迟，观察错误模式
+    }
+}

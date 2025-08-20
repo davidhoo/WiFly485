@@ -283,7 +283,6 @@ board = esp12e
 framework = arduino
 lib_deps =
     ESP8266mDNS
-    ESP8266WebServer
 build_flags =
     -DDEVICE_ROLE_MASTER
     -DDEVICE_NAME="WiFly485_Master"
@@ -294,7 +293,6 @@ board = esp12e
 framework = arduino
 lib_deps =
     ESP8266mDNS
-    ESP8266WebServer
 build_flags =
     -DDEVICE_ROLE_SLAVE
     -DDEVICE_NAME="WiFly485_Slave"

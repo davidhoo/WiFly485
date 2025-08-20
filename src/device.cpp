@@ -72,6 +72,6 @@ void Device::initializeName() {
   } else if (isSlave()) {
     name = DEFAULT_SLAVE_NAME;
   } else {
-    name = "WiFly485_Unknown";
+    name = "WiFly485_Unknown_Device";
   }
 }

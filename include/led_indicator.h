@@ -18,7 +18,6 @@ enum class LEDState {
     BLINK_SLOW,    // 慢闪烁
     BLINK_FAST,    // 快闪烁
     BREATHING,     // 呼吸效果
-    HEARTBEAT,     // 心跳效果
     ERROR,         // 错误状态
     CONNECTING,    // 连接中
     CONNECTED      // 已连接

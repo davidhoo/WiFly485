@@ -11,7 +11,6 @@
 #include "../include/wifi_manager.h"
 #include "../include/rs485.h"
 #include "../include/tcp_protocol.h"
-#include "../include/config_sync.h"
 #include "../include/heartbeat.h"
 #include "../include/error_handler.h"
 #include "../include/logger.h"
@@ -55,27 +54,7 @@ TEST(CompleteDataFlow) {
   
   LOG_I("IntegrationTest", "完整数据流测试完成");
 }
-
 /**
- * @brief 测试配置同步功能
- * 
- * 验证主从设备之间的配置同步机制
- */
-TEST(ConfigSynchronization) {
-  LOG_I("IntegrationTest", "开始配置同步测试");
-  
-  // TODO: 实现配置同步测试
-  // 1. 修改主设备配置
-  // 2. 验证配置同步到从设备
-  // 3. 验证配置一致性
-  // 4. 测试增量更新机制
-  
-  // 临时断言，实际实现需要硬件环境
-  ASSERT_TRUE(true);
-  
-  LOG_I("IntegrationTest", "配置同步测试完成");
-}
-
 /**
  * @brief 测试故障恢复能力
  * 
@@ -126,7 +105,6 @@ void run_integration_tests() {
   
   RUN_TEST(MasterSlaveCollaboration);
   RUN_TEST(CompleteDataFlow);
-  RUN_TEST(ConfigSynchronization);
   RUN_TEST(FailureRecovery);
   RUN_TEST(LongTermStability);
   

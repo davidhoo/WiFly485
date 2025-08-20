@@ -71,19 +71,14 @@ extern void runRS485Tests();
 // TCP协议测试函数声明
 extern void runProtocolTests();
 
-// 配置同步测试函数声明
-extern void run_config_sync_tests();
-
 // LED指示系统测试函数声明
 extern void test_led_basic();
 extern void test_led_states();
 extern void test_led_priority();
+extern void test_led_error_pattern();
 
 // 心跳检测测试函数声明
 extern void runHeartbeatTests();
-
-// Web界面测试函数声明
-extern void testWebInterface();
 
 // 错误处理框架测试函数声明
 extern void run_error_handler_tests();
@@ -104,14 +99,13 @@ void showTestMenu() {
   Serial.println("6 - mDNS服务测试");
   Serial.println("7 - RS485通信测试");
   Serial.println("8 - TCP协议测试");
-  Serial.println("9 - 配置同步测试");
-  Serial.println("10 - Web界面测试");
-  Serial.println("11 - LED指示系统基本功能测试");
-  Serial.println("12 - LED指示系统状态模式测试");
-  Serial.println("13 - LED指示系统优先级管理测试");
-  Serial.println("14 - 心跳检测测试");
-  Serial.println("15 - 错误处理框架测试");
-  Serial.println("16 - 集成测试");
+  Serial.println("9 - LED指示系统基本功能测试");
+  Serial.println("10 - LED指示系统状态模式测试");
+  Serial.println("11 - LED指示系统优先级管理测试");
+  Serial.println("12 - LED指示系统错误状态模式测试");
+  Serial.println("13 - 心跳检测测试");
+  Serial.println("14 - 错误处理框架测试");
+  Serial.println("15 - 集成测试");
   Serial.println("h|help - 输出测试菜单");
   Serial.println("q|quit - 退出测试程序");
   Serial.println("==================================================");
@@ -220,19 +214,14 @@ void setup() {
   // 注册TCP协议测试
   testFramework.registerTest(runProtocolTests, "TCPProtocol");
   
-  // 注册配置同步测试
-  testFramework.registerTest(run_config_sync_tests, "ConfigSync");
-  
   // 注册LED指示系统测试
   testFramework.registerTest(test_led_basic, "LEDIndicatorBasic");
   testFramework.registerTest(test_led_states, "LEDIndicatorStates");
   testFramework.registerTest(test_led_priority, "LEDIndicatorPriority");
+  testFramework.registerTest(test_led_error_pattern, "LEDIndicatorErrorPattern");
   
   // 注册心跳检测测试
   testFramework.registerTest(runHeartbeatTests, "Heartbeat");
-
-  // 注册Web界面测试
-  testFramework.registerTest(testWebInterface, "WebInterface");
   
   // 注册错误处理框架测试
   testFramework.registerTest(run_error_handler_tests, "ErrorHandler");
@@ -287,27 +276,24 @@ void runSelectedTest(int testNumber) {
       runProtocolTests();
       break;
     case 9:
-      run_config_sync_tests();
-      break;
-    case 10:
-      testWebInterface();
-      break;
-    case 11:
       test_led_basic();
       break;
-    case 12:
+    case 10:
       test_led_states();
       break;
-    case 13:
+    case 11:
       test_led_priority();
       break;
-    case 14:
+    case 12:
+      test_led_error_pattern();
+      break;
+    case 13:
       runHeartbeatTests();
       break;
-    case 15:
+    case 14:
       run_error_handler_tests();
       break;
-    case 16:
+    case 15:
       run_integration_tests();
       break;
     default:
@@ -365,32 +351,28 @@ void loop() {
       runSelectedTest(8);
       showTestMenu();
     } else if (input == "9") {
-      Serial.println("运行配置同步测试...");
+      Serial.println("运行LED指示系统基本功能测试...");
       runSelectedTest(9);
       showTestMenu();
     } else if (input == "10") {
-      Serial.println("运行Web界面测试...");
+      Serial.println("运行LED指示系统状态模式测试...");
       runSelectedTest(10);
       showTestMenu();
     } else if (input == "11") {
-      Serial.println("运行LED指示系统基本功能测试...");
+      Serial.println("运行LED指示系统优先级管理测试...");
       runSelectedTest(11);
       showTestMenu();
     } else if (input == "12") {
-      Serial.println("运行LED指示系统状态模式测试...");
+      Serial.println("运行LED指示系统错误状态模式测试...");
       runSelectedTest(12);
       showTestMenu();
     } else if (input == "13") {
-      Serial.println("运行LED指示系统优先级管理测试...");
+      Serial.println("运行心跳检测测试...");
       runSelectedTest(13);
       showTestMenu();
     } else if (input == "14") {
-      Serial.println("运行心跳检测测试...");
-      runSelectedTest(14);
-      showTestMenu();
-    } else if (input == "16") {
       Serial.println("运行集成测试...");
-      runSelectedTest(16);
+      runSelectedTest(14);
       showTestMenu();
     } else if (input == "h" || input == "help") {
       showTestMenu();
