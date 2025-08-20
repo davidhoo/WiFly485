@@ -3,10 +3,9 @@
 #include "config.h"
 #include "logger.h"
 
-Heartbeat::Heartbeat(Device* device) 
-    : _device(device), _status(HEARTBEAT_DISCONNECTED), 
-      _lastHeartbeatTime(0), _lastReceivedTime(0),
-      _client(nullptr), _server(nullptr) {
+Heartbeat::Heartbeat(Device* device, TCPProtocol* tcpProtocol)
+    : _device(device), _tcpProtocol(tcpProtocol), _status(HEARTBEAT_DISCONNECTED),
+      _lastHeartbeatTime(0), _lastReceivedTime(0) {
 }
 
 Heartbeat::~Heartbeat() {
@@ -18,14 +17,8 @@ void Heartbeat::begin() {
     _lastHeartbeatTime = millis();
     _lastReceivedTime = millis();
     
-    // 根据设备角色初始化客户端或服务器
-    if (_device->isMaster()) {
-        _server = new WiFiServer(HEARTBEAT_PORT);
-        _server->begin();
-        LOG_I("Heartbeat", "Heartbeat server started on port %d", HEARTBEAT_PORT);
-    } else {
-        _client = new WiFiClient();
-    }
+    // 不再需要初始化独立的客户端或服务器
+    // 心跳将复用业务通讯的TCP连接
 }
 
 void Heartbeat::handle() {
@@ -33,36 +26,6 @@ void Heartbeat::handle() {
     if (isTimeout()) {
         LOG_W("Heartbeat", "Heartbeat timeout detected");
         _status = HEARTBEAT_STATUS_TIMEOUT;
-        
-        // 尝试重新连接
-        if (reconnect()) {
-            LOG_I("Heartbeat", "Reconnected successfully");
-            _status = HEARTBEAT_CONNECTED;
-        } else {
-            LOG_E("Heartbeat", "Failed to reconnect");
-            _status = HEARTBEAT_DISCONNECTED;
-        }
-    }
-    
-    // 主设备处理客户端连接
-    if (_device->isMaster() && _server) {
-        WiFiClient client = _server->available();
-        if (client) {
-            // 读取心跳包
-            if (client.available()) {
-                char buffer[10];
-                int len = client.readBytes(buffer, sizeof(buffer) - 1);
-                buffer[len] = '\0';
-                
-                if (strcmp(buffer, "PING") == 0) {
-                    client.print("PONG");
-                    _lastReceivedTime = millis();
-                    _status = HEARTBEAT_CONNECTED;
-                    LOG_D("Heartbeat", "Received PING from slave, sent PONG");
-                }
-            }
-            client.stop();
-        }
     }
     
     // 从设备发送心跳包
@@ -85,40 +48,36 @@ bool Heartbeat::sendHeartbeat() {
         return true;
     }
     
-    // 确保已连接到主设备
-    // 确保已连接到主设备
-    // 确保已连接到主设备
-    if (!_client || !_client->connected()) {
-        // 尝试连接到主设备
-        String masterIP = _device->getMasterIP();
-        
-        if (!_client->connect(masterIP.c_str(), HEARTBEAT_PORT)) {
-            LOG_E("Heartbeat", "Failed to connect to master at %s", masterIP.c_str());
-            return false;
-        }
-    }
-    _client->print("PING");
-    
-    // 等待响应
-    unsigned long startTime = millis();
-    while (!_client->available() && (millis() - startTime) < 3000) {
-        delay(10);
+    // 检查TCP连接状态
+    if (!_tcpProtocol || _tcpProtocol->getConnectionStatus() != TCP_CONNECTED) {
+        LOG_E("Heartbeat", "TCP connection not available");
+        _status = HEARTBEAT_DISCONNECTED;
+        return false;
     }
     
-    if (_client->available()) {
-        String response = _client->readStringUntil('\n');
-        if (response == "PONG") {
-            _lastReceivedTime = millis();
-            _status = HEARTBEAT_CONNECTED;
-            return true;
-        }
-    }
+    // 构造心跳包数据
+    // 使用特殊的数据包类型标识心跳包
+    uint8_t heartbeatData[4];
+    heartbeatData[0] = (HEARTBEAT_PACKET_TYPE >> 8) & 0xFF;  // 高字节
+    heartbeatData[1] = HEARTBEAT_PACKET_TYPE & 0xFF;        // 低字节
+    heartbeatData[2] = 'P';
+    heartbeatData[3] = 'I';
     
-    return false;
+    // 通过TCP协议发送心跳包
+    if (_tcpProtocol->sendData(heartbeatData, sizeof(heartbeatData))) {
+        _lastReceivedTime = millis();
+        _status = HEARTBEAT_CONNECTED;
+        return true;
+    } else {
+        LOG_E("Heartbeat", "Failed to send heartbeat packet");
+        return false;
+    }
 }
 
 void Heartbeat::handleHeartbeat() {
-    // 这个方法在handle()中已经处理了
+    // 更新最后接收时间
+    _lastReceivedTime = millis();
+    _status = HEARTBEAT_CONNECTED;
 }
 
 HeartbeatStatus Heartbeat::getStatus() {
@@ -134,26 +93,13 @@ bool Heartbeat::isTimeout() {
 }
 
 bool Heartbeat::reconnect() {
-    if (_device->isMaster()) {
-        // 主设备不需要重新连接
-        return true;
-    }
-    
-    // 从设备重新连接到主设备
-    if (_client) {
-        _client->stop();
-        delete _client;
-    }
-    _client = new WiFiClient();
-    
-    String masterIP = _device->getMasterIP();
-    
-    if (_client->connect(masterIP.c_str(), HEARTBEAT_PORT)) {
-        LOG_I("Heartbeat", "Reconnected to master at %s", masterIP.c_str());
-        _lastReceivedTime = millis();
+    // 心跳复用业务通讯连接，不再需要独立的重连逻辑
+    // 业务通讯模块会处理连接管理
+    if (_tcpProtocol && _tcpProtocol->getConnectionStatus() == TCP_CONNECTED) {
+        _status = HEARTBEAT_CONNECTED;
         return true;
     } else {
-        LOG_E("Heartbeat", "Failed to reconnect to master at %s", masterIP.c_str());
+        _status = HEARTBEAT_DISCONNECTED;
         return false;
     }
-    }
+}

@@ -5,6 +5,7 @@
 #include "mdns_service.h"
 #include "rs485.h"
 #include "tcp_protocol.h"
+#include "heartbeat.h"
 #include "led_indicator.h"
 #include "error_handler.h"
 
@@ -14,6 +15,7 @@ WiFiManager wifiManager;
 MDNSService mdnsService;
 RS485 rs485;
 TCPProtocol tcpProtocol;
+Heartbeat heartbeat(&device, &tcpProtocol);  // 添加心跳模块
 LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
 LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
 LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
@@ -82,6 +84,14 @@ void setup()
   
   LOG_I("Main", "TCP协议初始化成功");
   
+  // 将心跳模块设置到TCP协议中
+  tcpProtocol.setHeartbeat(&heartbeat);
+  
+  // 初始化心跳模块
+  heartbeat.begin();
+  
+  LOG_I("Main", "心跳模块初始化成功");
+  
   // 初始化LED指示器
   ledIndicator.begin();
   ledIndicator.setState(LEDState::OFF, LEDPriority::PRIORITY_LOW);
@@ -107,6 +117,9 @@ void loop()
   
   // 处理TCP协议
   tcpProtocol.handle();
+  
+  // 处理心跳模块
+  heartbeat.handle();
   
   // 根据设备状态更新LED指示器
   // 根据设备状态更新LED指示器

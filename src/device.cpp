@@ -55,7 +55,8 @@ void Device::setName(const String& name) {
 }
 
 String Device::getMasterIP() {
-  return DEFAULT_MASTER_IP;
+  // IP地址通过mDNS服务动态获取，不使用静态定义的默认值
+  return "";
 }
 
 void Device::initializeRole() {

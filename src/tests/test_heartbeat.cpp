@@ -1,14 +1,18 @@
 #include <Arduino.h>
 #include "test_framework.h"
 #include "heartbeat.h"
+#include "tcp_protocol.h"
 #include "device.h"
 
 TEST(HeartbeatInitialization) {
     // 创建设备实例
     Device device;
     
+    // 创建TCP协议模拟实例
+    TCPProtocol tcpProtocol;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device);
+    Heartbeat heartbeat(&device, &tcpProtocol);
     
     // 检查初始状态
     ASSERT_EQUAL(HEARTBEAT_DISCONNECTED, heartbeat.getStatus());
@@ -18,8 +22,11 @@ TEST(HeartbeatStatusTransitions) {
     // 创建设备实例
     Device device;
     
+    // 创建TCP协议模拟实例
+    TCPProtocol tcpProtocol;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device);
+    Heartbeat heartbeat(&device, &tcpProtocol);
     
     // 检查初始状态
     ASSERT_EQUAL(HEARTBEAT_DISCONNECTED, heartbeat.getStatus());
@@ -37,8 +44,11 @@ TEST(HeartbeatTimeout) {
     // 创建设备实例
     Device device;
     
+    // 创建TCP协议模拟实例
+    TCPProtocol tcpProtocol;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device);
+    Heartbeat heartbeat(&device, &tcpProtocol);
     
     // 初始状态应该是未超时
     // 注意：由于isTimeout()依赖于时间，我们无法在测试中准确模拟
@@ -53,8 +63,11 @@ TEST(HeartbeatReconnect) {
     // 创建设备实例
     Device device;
     
+    // 创建TCP协议模拟实例
+    TCPProtocol tcpProtocol;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device);
+    Heartbeat heartbeat(&device, &tcpProtocol);
     
     // 测试重新连接功能
     // 注意：这个测试可能需要实际的网络连接或模拟网络环境

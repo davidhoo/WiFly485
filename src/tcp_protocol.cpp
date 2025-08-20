@@ -1,6 +1,7 @@
 #include "tcp_protocol.h"
 #include <ESP8266WiFi.h>
 #include "error_handler.h"
+#include "heartbeat.h"
 
 TCPProtocol::TCPProtocol() :
   device(nullptr),
@@ -45,6 +46,10 @@ bool TCPProtocol::begin(Device* device, RS485* rs485, MDNSService* mdnsService) 
   }
   
   return true;
+}
+
+void TCPProtocol::setHeartbeat(Heartbeat* heartbeat) {
+  this->heartbeat = heartbeat;
 }
 
 
@@ -265,7 +270,32 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
     return -1;
   }
   
+  // 检查是否为心跳包
+  if (isHeartbeatPacket(buffer, dataRead)) {
+    handleHeartbeatPacket(buffer, dataRead);
+    // 心跳包不需要返回给应用层
+    return 0;
+  }
+  
   return dataRead;
+}
+
+bool TCPProtocol::isHeartbeatPacket(const uint8_t* data, size_t length) {
+  // 心跳包格式：前两个字节为心跳包类型标识(0xFF01)
+  if (length >= 4 && data[0] == 0xFF && data[1] == 0x01) {
+    // 检查是否为"PI"字符串
+    if (data[2] == 'P' && data[3] == 'I') {
+      return true;
+    }
+  }
+  return false;
+}
+
+void TCPProtocol::handleHeartbeatPacket(const uint8_t* data, size_t length) {
+  // 如果有心跳模块，调用心跳模块的处理函数
+  if (heartbeat) {
+    heartbeat->handleHeartbeat();
+  }
 }
 
 void TCPProtocol::handleServer() {
