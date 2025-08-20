@@ -21,7 +21,7 @@ TestFramework::~TestFramework() {
 
 void TestFramework::begin() {
   // 初始化测试框架
-  Serial.println("=== WiFly485 测试框架初始化 ===");
+  LOG_I("TestFramework", "=== WiFly485 测试框架初始化 ===");
   totalTests = 0;
   passedTests = 0;
   failedTests = 0;
@@ -29,11 +29,11 @@ void TestFramework::begin() {
 
 void TestFramework::runAllTests() {
   // 运行所有测试
-  Serial.println("=== 开始运行所有测试 ===");
+  LOG_I("TestFramework", "=== 开始运行所有测试 ===");
   
   TestItem* current = testList;
   while (current != nullptr) {
-    Serial.printf("运行测试: %s\n", current->testName);
+    LOG_I("TestFramework", "运行测试: %s", current->testName);
     LOG_I("TestFramework", "运行测试: %s", current->testName);
     
     // 运行测试函数
@@ -42,7 +42,7 @@ void TestFramework::runAllTests() {
     current = current->next;
   }
   
-  Serial.println("=== 测试运行完成 ===");
+  LOG_I("TestFramework", "=== 测试运行完成 ===");
 }
 
 void TestFramework::registerTest(void (*testFunc)(), const char* testName) {
@@ -64,7 +64,7 @@ void TestFramework::assertTrue(bool condition, const char* testName, const char*
   } else {
     failedTests++;
     LOG_E("TestFramework", "测试 %s 失败: %s", testName, message);
-    Serial.printf("  失败: %s\n", message);
+    LOG_E("TestFramework", "  失败: %s", message);
   }
 }
 
@@ -76,7 +76,7 @@ void TestFramework::assertEquals(int expected, int actual, const char* testName,
   } else {
     failedTests++;
     LOG_E("TestFramework", "测试 %s 失败: %s (期望: %d, 实际: %d)", testName, message, expected, actual);
-    Serial.printf("  失败: %s (期望: %d, 实际: %d)\n", message, expected, actual);
+    LOG_E("TestFramework", "  失败: %s (期望: %d, 实际: %d)", message, expected, actual);
   }
 }
 
@@ -88,22 +88,22 @@ void TestFramework::assertStringEquals(const char* expected, const char* actual,
   } else {
     failedTests++;
     LOG_E("TestFramework", "测试 %s 失败: %s (期望: %s, 实际: %s)", testName, message, expected, actual);
-    Serial.printf("  失败: %s (期望: %s, 实际: %s)\n", message, expected, actual);
+    LOG_E("TestFramework", "  失败: %s (期望: %s, 实际: %s)", message, expected, actual);
   }
 }
 
 void TestFramework::printTestResults() {
   // 打印测试结果
-  Serial.println("=== 测试结果 ===");
-  Serial.printf("总测试数: %d\n", totalTests);
-  Serial.printf("通过测试: %d\n", passedTests);
-  Serial.printf("失败测试: %d\n", failedTests);
+  LOG_I("TestFramework", "=== 测试结果 ===");
+  LOG_I("TestFramework", "总测试数: %d", totalTests);
+  LOG_I("TestFramework", "通过测试: %d", passedTests);
+  LOG_I("TestFramework", "失败测试: %d", failedTests);
   
   if (failedTests == 0) {
-    Serial.println("所有测试通过!");
+    LOG_I("TestFramework", "所有测试通过!");
     LOG_I("TestFramework", "所有测试通过! 总计: %d", totalTests);
   } else {
-    Serial.println("有测试失败!");
+    LOG_E("TestFramework", "有测试失败!");
     LOG_E("TestFramework", "测试失败! 通过: %d, 失败: %d", passedTests, failedTests);
   }
 }

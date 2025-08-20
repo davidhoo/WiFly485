@@ -69,7 +69,7 @@ bool WiFiManager::connect() {
     return false;
   }
   // 连接到WiFi网络
-  Serial.printf("WiFiManager: Connecting to %s\n", ssid);
+  LOG_I("WiFiManager", "Connecting to %s", ssid);
   WiFi.begin(ssid, password);
   
   return true;
@@ -117,7 +117,7 @@ void WiFiManager::handle() {
   if (connectionStatus == WIFI_CONNECTING) {
     // 检查连接是否超时
     if (isConnectionTimedOut()) {
-      Serial.println("WiFiManager: Connection timeout");
+      LOG_E("WiFiManager", "Connection timeout");
       updateConnectionStatus(WIFI_CONNECTION_FAILED);
       WiFi.disconnect();
     }
@@ -139,9 +139,9 @@ void WiFiManager::handle() {
       if (currentReconnectInterval > 300000) { // 300秒 = 5分钟
         currentReconnectInterval = 300000;
       }
-      
-      Serial.printf("WiFiManager: Reconnect attempt %d, next interval %lu ms\n",
+      LOG_I("WiFiManager", "Reconnect attempt %d, next interval %lu ms",
                     retryCount, currentReconnectInterval);
+      connect();
       connect();
     }
   }
@@ -159,21 +159,21 @@ void WiFiManager::setupStationMode() {
 void WiFiManager::onWiFiEvent(WiFiEvent_t event) {
   switch (event) {
     case WIFI_EVENT_STAMODE_CONNECTED:
-      Serial.println("WiFiManager: Station connected to AP");
+      LOG_I("WiFiManager", "Station connected to AP");
       break;
       
     case WIFI_EVENT_STAMODE_DISCONNECTED:
-      Serial.println("WiFiManager: Station disconnected from AP");
+      LOG_I("WiFiManager", "Station disconnected from AP");
       updateConnectionStatus(WIFI_DISCONNECTED);
       break;
       
     case WIFI_EVENT_STAMODE_GOT_IP:
-      Serial.printf("WiFiManager: Station got IP: %s\n", WiFi.localIP().toString().c_str());
+      LOG_I("WiFiManager", "Station got IP: %s", WiFi.localIP().toString().c_str());
       updateConnectionStatus(WIFI_CONNECTED);
       break;
       
     case WIFI_EVENT_STAMODE_DHCP_TIMEOUT:
-      Serial.println("WiFiManager: Station DHCP timeout");
+      LOG_E("WiFiManager", "Station DHCP timeout");
       updateConnectionStatus(WIFI_CONNECTION_FAILED);
       break;
       
@@ -191,7 +191,7 @@ void WiFiManager::updateConnectionStatus(WiFiConnectionStatus status) {
       retryCount = 0;
       currentReconnectInterval = RECONNECT_INTERVAL;
       lastConnectionAttempt = millis(); // 更新上次连接尝试时间
-      Serial.println("WiFiManager: Connection successful, reset retry count");
+      LOG_I("WiFiManager", "Connection successful, reset retry count");
     }
     
     // 调用回调函数
@@ -200,7 +200,7 @@ void WiFiManager::updateConnectionStatus(WiFiConnectionStatus status) {
     }
     
     // 打印状态变化
-    Serial.printf("WiFiManager: Connection status changed to %s\n", getConnectionStatusString().c_str());
+    LOG_I("WiFiManager", "Connection status changed to %s", getConnectionStatusString().c_str());
   }
 }
 

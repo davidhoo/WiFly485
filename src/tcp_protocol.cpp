@@ -38,11 +38,11 @@ bool TCPProtocol::begin(Device* device, RS485* rs485, MDNSService* mdnsService) 
     // 主设备创建服务器，监听DEFAULT_MASTER_TCP_PORT端口
     server = new WiFiServer(DEFAULT_MASTER_TCP_PORT);
     server->begin();
-    Serial.printf("TCPProtocol: Server started on port %d\n", DEFAULT_MASTER_TCP_PORT);
+    LOG_I("TCPProtocol", "Server started on port %d", DEFAULT_MASTER_TCP_PORT);
   } else {
     // 从设备不需要创建服务器
     server = nullptr;
-    Serial.println("TCPProtocol: Client mode initialized");
+    LOG_I("TCPProtocol", "Client mode initialized");
   }
   
   return true;
@@ -67,7 +67,7 @@ void TCPProtocol::handle() {
   if (connectionStatus == TCP_CONNECTING) {
     // 检查连接是否超时
     if (isConnectionTimedOut()) {
-      Serial.println("TCPProtocol: Connection timeout");
+      LOG_E("TCPProtocol", "Connection timeout");
       updateConnectionStatus(TCP_CONNECTION_FAILED);
       if (client.connected()) {
         client.stop();
@@ -153,7 +153,7 @@ void TCPProtocol::updateConnectionStatus(TCPConnectionStatus status) {
     }
     
     // 打印状态变化
-    Serial.printf("TCPProtocol: Connection status changed to %s\n", getConnectionStatusString().c_str());
+    LOG_I("TCPProtocol", "Connection status changed to %s", getConnectionStatusString().c_str());
   }
 }
 
@@ -252,7 +252,7 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
   // 检查是否有足够的数据可读
   if (client.available() < header.length) {
     // 数据不完整，重新放回头部数据（这里简化处理，实际应用中可能需要更复杂的缓冲区管理）
-    Serial.println("TCPProtocol: Incomplete packet data");
+    LOG_W("TCPProtocol", "Incomplete packet data");
     return 0;
   }
   
@@ -310,11 +310,11 @@ void TCPProtocol::handleServer() {
       // 接受新连接
       client = newClient;
       updateConnectionStatus(TCP_CONNECTED);
-      Serial.printf("TCPProtocol: New client connected from %s\n", client.remoteIP().toString().c_str());
+      LOG_I("TCPProtocol", "New client connected from %s", client.remoteIP().toString().c_str());
     } else {
       // 已经有连接，拒绝新连接
       newClient.stop();
-      Serial.println("TCPProtocol: New client rejected, already connected");
+      LOG_W("TCPProtocol", "New client rejected, already connected");
     }
   }
   
@@ -392,14 +392,14 @@ bool TCPProtocol::discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort) {
   if (mdnsService->discoverMaster(masterIPStr, masterPort)) {
     // 将String类型的IP地址转换为IPAddress类型
     if (masterIP.fromString(masterIPStr)) {
-      Serial.printf("TCPProtocol: Discovered master at %s:%d\n", masterIPStr.c_str(), masterPort);
+      LOG_I("TCPProtocol", "Discovered master at %s:%d", masterIPStr.c_str(), masterPort);
       return true;
     } else {
-      Serial.println("TCPProtocol: Failed to parse master IP address");
+      LOG_E("TCPProtocol", "Failed to parse master IP address");
       return false;
     }
   } else {
-    Serial.println("TCPProtocol: Failed to discover master via mDNS");
+    LOG_E("TCPProtocol", "Failed to discover master via mDNS");
     return false;
   }
 }
@@ -409,26 +409,26 @@ bool TCPProtocol::connectToMaster() {
   IPAddress masterIP;
   uint16_t masterPort = DEFAULT_MASTER_TCP_PORT; // 默认端口
   
-  Serial.println("TCPProtocol: Discovering master via mDNS...");
+  LOG_I("TCPProtocol", "Discovering master via mDNS...");
   if (!discoverMasterIP(masterIP, masterPort)) {
-    Serial.println("TCPProtocol: Failed to discover master via mDNS");
+    LOG_E("TCPProtocol", "Failed to discover master via mDNS");
     // mDNS查找失败，返回false，让上层决定是否重试
     updateConnectionStatus(TCP_CONNECTION_FAILED);
     return false;
   }
   
-  Serial.printf("TCPProtocol: Connecting to master at %s:%d\n", masterIP.toString().c_str(), masterPort);
+  LOG_I("TCPProtocol", "Connecting to master at %s:%d", masterIP.toString().c_str(), masterPort);
   
   updateConnectionStatus(TCP_CONNECTING);
   connectionStartTime = millis();
   
   // 尝试连接到主设备
   if (client.connect(masterIP, masterPort)) {
-    Serial.println("TCPProtocol: Connected to master");
+    LOG_I("TCPProtocol", "Connected to master");
     updateConnectionStatus(TCP_CONNECTED);
     return true;
   } else {
-    Serial.println("TCPProtocol: Failed to connect to master");
+    LOG_E("TCPProtocol", "Failed to connect to master");
     updateConnectionStatus(TCP_CONNECTION_FAILED);
     return false;
   }

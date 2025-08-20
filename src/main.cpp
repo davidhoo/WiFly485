@@ -31,7 +31,7 @@ void setup()
   Serial.begin(115200);
   delay(1000);
   
-  Serial.println("=== WiFly485 主程序 ===");
+  LOG_I("Main", "=== WiFly485 主程序 ===");
   
   // 初始化日志系统
   logger.begin();
@@ -104,7 +104,7 @@ void setup()
   wifiManager.connect();
   
   LOG_I("Main", "主程序初始化完成");
-  Serial.println("=== 主程序初始化完成 ===");
+  LOG_I("Main", "=== 主程序初始化完成 ===");
 }
 
 void loop()
@@ -206,11 +206,11 @@ void loop()
 void onWiFiConnectionStatusChanged(WiFiConnectionStatus status) {
   // 主设备或从设备在WiFi连接成功时都启动mDNS服务
   if (status == WIFI_CONNECTED) {
-    Serial.println("Main: WiFi connected, starting mDNS service...");
+    LOG_I("Main", "WiFi connected, starting mDNS service...");
     if (mdnsService.start()) {
-      Serial.println("Main: mDNS service started successfully");
+      LOG_I("Main", "mDNS service started successfully");
     } else {
-      Serial.println("Main: Failed to start mDNS service");
+      LOG_E("Main", "Failed to start mDNS service");
     }
   }
 }

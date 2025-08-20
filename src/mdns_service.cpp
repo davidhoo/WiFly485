@@ -55,7 +55,7 @@ bool MDNSService::start() {
   // 设置mDNS服务
   if (setupMDNSService()) {
     updateServiceStatus(MDNS_SERVICE_RUNNING);
-    Serial.printf("MDNSService: Started %s service\n", serviceName.c_str());
+    LOG_I("MDNSService", "Started %s service", serviceName.c_str());
     return true;
   } else {
     updateServiceStatus(MDNS_SERVICE_ERROR);
@@ -65,9 +65,9 @@ bool MDNSService::start() {
 }
 
 void MDNSService::stop() {
-  MDNS.close();
-  updateServiceStatus(MDNS_SERVICE_STOPPED);
-  Serial.println("MDNSService: Stopped");
+MDNS.close();
+updateServiceStatus(MDNS_SERVICE_STOPPED);
+LOG_I("MDNSService", "Stopped");
 }
 
 void MDNSService::handle() {
@@ -102,83 +102,81 @@ String MDNSService::getStatusString() {
 }
 
 bool MDNSService::discoverMaster(String& masterIP, uint16_t& masterPort) {
-  // 查找主设备服务
-  int n = MDNS.queryService("wifly485-master", "tcp");
-  
-  if (n > 0) {
-    // 找到主设备
-    masterIP = MDNS.IP(0).toString();
-    masterPort = MDNS.port(0);
-    Serial.printf("MDNSService: Found master at %s:%d\n", masterIP.c_str(), masterPort);
-    return true;
-  } else {
-    Serial.println("MDNSService: No master found");
-    return false;
-  }
-}
+// 查找主设备服务
+int n = MDNS.queryService("wifly485-master", "tcp");
 
+if (n > 0) {
+  // 找到主设备
+  masterIP = MDNS.IP(0).toString();
+  masterPort = MDNS.port(0);
+  LOG_I("MDNSService", "Found master at %s:%d", masterIP.c_str(), masterPort);
+  return true;
+} else {
+  LOG_W("MDNSService", "No master found");
+  return false;
+}
+}
 bool MDNSService::discoverSlave(String& slaveIP, uint16_t& slavePort) {
-  // 查找从设备服务
-  int n = MDNS.queryService("wifly485-slave", "tcp");
-  
-  if (n > 0) {
-    // 找到从设备
-    slaveIP = MDNS.IP(0).toString();
-    slavePort = MDNS.port(0);
-    Serial.printf("MDNSService: Found slave at %s:%d\n", slaveIP.c_str(), slavePort);
-    return true;
-  } else {
-    Serial.println("MDNSService: No slave found");
-    return false;
-  }
-}
+// 查找从设备服务
+int n = MDNS.queryService("wifly485-slave", "tcp");
 
-void MDNSService::setServiceStatusCallback(ServiceStatusCallback callback) {
-  statusCallback = callback;
+if (n > 0) {
+  // 找到从设备
+  slaveIP = MDNS.IP(0).toString();
+  slavePort = MDNS.port(0);
+  LOG_I("MDNSService", "Found slave at %s:%d", slaveIP.c_str(), slavePort);
+  return true;
+} else {
+  LOG_W("MDNSService", "No slave found");
+  return false;
 }
+ }
+ 
+ void MDNSService::setServiceStatusCallback(ServiceStatusCallback callback) {
+ statusCallback = callback;
+ }
 
 void MDNSService::updateServiceStatus(MDNSServiceStatus status) {
-  if (serviceStatus != status) {
-    serviceStatus = status;
-    
-    // 调用回调函数
-    if (statusCallback) {
-      statusCallback(status);
-    }
-    
-    // 打印状态变化
-    Serial.printf("MDNSService: Service status changed to %s\n", getStatusString().c_str());
+if (serviceStatus != status) {
+  serviceStatus = status;
+  
+  // 调用回调函数
+  if (statusCallback) {
+    statusCallback(status);
   }
+  
+  // 打印状态变化
+  LOG_I("MDNSService", "Service status changed to %s", getStatusString().c_str());
+}
 }
 
 bool MDNSService::setupMDNSService() {
-  // 初始化mDNS
-  // 根据需求文档，主机名应该是"wifly485-[角色]"
-  String hostname = "wifly485-";
-  if (device->isMaster()) {
-    hostname += "master";
-  } else {
-    hostname += "slave";
-  }
-  
-  if (!MDNS.begin(hostname.c_str())) {
-    REPORT_ERROR(ERROR_MDNS_FAILED, "MDNSService", "Failed to start mDNS");
-    return false;
-  }
-  
-  // 添加服务
-  if (device->isMaster()) {
-    // 主设备添加TCP服务
-    MDNS.addService("wifly485-master", "tcp", DEFAULT_MASTER_TCP_PORT);
-    MDNS.addServiceTxt("wifly485-master", "tcp", "device", device->getName().c_str());
-    MDNS.addServiceTxt("wifly485-master", "tcp", "role", "master");
-  } else {
-    // 从设备添加服务
-    MDNS.addService("wifly485-slave", "tcp", DEFAULT_MASTER_TCP_PORT);
-    MDNS.addServiceTxt("wifly485-slave", "tcp", "device", device->getName().c_str());
-    MDNS.addServiceTxt("wifly485-slave", "tcp", "role", "slave");
-  }
-  
-  Serial.printf("MDNSService: Added service %s\n", serviceName.c_str());
-  return true;
+// 初始化mDNS
+// 根据需求文档，主机名应该是"wifly485-[角色]"
+String hostname = "wifly485-";
+if (device->isMaster()) {
+  hostname += "master";
+} else {
+  hostname += "slave";
+}
+
+if (!MDNS.begin(hostname.c_str())) {
+  REPORT_ERROR(ERROR_MDNS_FAILED, "MDNSService", "Failed to start mDNS");
+  return false;
+}
+
+// 添加服务
+if (device->isMaster()) {
+  // 主设备添加TCP服务
+  MDNS.addService("wifly485-master", "tcp", DEFAULT_MASTER_TCP_PORT);
+  MDNS.addServiceTxt("wifly485-master", "tcp", "device", device->getName().c_str());
+  MDNS.addServiceTxt("wifly485-master", "tcp", "role", "master");
+} else {
+  // 从设备添加服务
+  MDNS.addService("wifly485-slave", "tcp", DEFAULT_MASTER_TCP_PORT);
+  MDNS.addServiceTxt("wifly485-slave", "tcp", "device", device->getName().c_str());
+  MDNS.addServiceTxt("wifly485-slave", "tcp", "role", "slave");
+}
+LOG_I("MDNSService", "Added service %s", serviceName.c_str());
+return true;
 }
