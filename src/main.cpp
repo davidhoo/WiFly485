@@ -15,7 +15,7 @@ WiFiManager wifiManager;
 MDNSService mdnsService;
 RS485 rs485;
 TCPProtocol tcpProtocol;
-Heartbeat heartbeat(&device, &tcpProtocol);  // 添加心跳模块
+Heartbeat heartbeat(&device, &tcpProtocol, &wifiManager);  // 添加心跳模块
 LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
 LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
 LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚

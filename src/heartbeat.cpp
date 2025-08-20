@@ -1,11 +1,12 @@
 #include "heartbeat.h"
 #include "tcp_protocol.h"
+#include "wifi_manager.h"
 #include "config.h"
 #include "logger.h"
 
-Heartbeat::Heartbeat(Device* device, TCPProtocol* tcpProtocol)
-    : _device(device), _tcpProtocol(tcpProtocol), _status(HEARTBEAT_DISCONNECTED),
-      _lastHeartbeatTime(0), _lastReceivedTime(0) {
+Heartbeat::Heartbeat(Device* device, TCPProtocol* tcpProtocol, WiFiManager* wifiManager)
+    : _device(device), _tcpProtocol(tcpProtocol), _wifiManager(wifiManager), _status(HEARTBEAT_DISCONNECTED),
+      _lastHeartbeatTime(0), _lastReceivedTime(0), _canStart(false) {
 }
 
 Heartbeat::~Heartbeat() {
@@ -22,6 +23,34 @@ void Heartbeat::begin() {
 }
 
 void Heartbeat::handle() {
+    // 检查WiFi和TCP连接状态，确定是否可以开始心跳检测
+    if (!_canStart) {
+        if (_wifiManager && _wifiManager->getConnectionStatus() == WIFI_CONNECTED &&
+            _tcpProtocol && _tcpProtocol->getConnectionStatus() == TCP_CONNECTED) {
+            _canStart = true;
+            LOG_I("Heartbeat", "WiFi and TCP connected, starting heartbeat detection");
+        } else {
+            // 如果连接状态不满足要求，保持心跳状态为断开
+            _status = HEARTBEAT_DISCONNECTED;
+            return;
+        }
+    }
+    
+    // 检查连接状态是否发生变化
+    if (_wifiManager && _wifiManager->getConnectionStatus() != WIFI_CONNECTED) {
+        _canStart = false;
+        _status = HEARTBEAT_DISCONNECTED;
+        LOG_W("Heartbeat", "WiFi disconnected, stopping heartbeat detection");
+        return;
+    }
+    
+    if (_tcpProtocol && _tcpProtocol->getConnectionStatus() != TCP_CONNECTED) {
+        _canStart = false;
+        _status = HEARTBEAT_DISCONNECTED;
+        LOG_W("Heartbeat", "TCP disconnected, stopping heartbeat detection");
+        return;
+    }
+    
     // 检查是否超时
     if (isTimeout()) {
         LOG_W("Heartbeat", "Heartbeat timeout detected");

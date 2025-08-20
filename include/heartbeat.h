@@ -8,6 +8,7 @@
 
 // 前向声明
 class TCPProtocol;
+class WiFiManager;
 
 // 心跳包发送间隔（毫秒）
 #define HEARTBEAT_INTERVAL 5000
@@ -26,7 +27,7 @@ enum HeartbeatStatus {
 };
 class Heartbeat {
 public:
-    Heartbeat(Device* device, TCPProtocol* tcpProtocol);
+    Heartbeat(Device* device, TCPProtocol* tcpProtocol, WiFiManager* wifiManager);
     ~Heartbeat();
 
     // 初始化心跳检测
@@ -56,9 +57,11 @@ public:
 private:
     Device* _device;
     TCPProtocol* _tcpProtocol;
+    WiFiManager* _wifiManager;
     HeartbeatStatus _status;
     unsigned long _lastHeartbeatTime;
     unsigned long _lastReceivedTime;
+    bool _canStart;  // 标记是否可以开始心跳检测
 };
 
 #endif // HEARTBEAT_H

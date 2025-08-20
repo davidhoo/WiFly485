@@ -11,8 +11,11 @@ TEST(HeartbeatInitialization) {
     // 创建TCP协议模拟实例
     TCPProtocol tcpProtocol;
     
+    // 创建WiFi管理器模拟实例
+    WiFiManager wifiManager;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device, &tcpProtocol);
+    Heartbeat heartbeat(&device, &tcpProtocol, &wifiManager);
     
     // 检查初始状态
     ASSERT_EQUAL(HEARTBEAT_DISCONNECTED, heartbeat.getStatus());
@@ -25,8 +28,11 @@ TEST(HeartbeatStatusTransitions) {
     // 创建TCP协议模拟实例
     TCPProtocol tcpProtocol;
     
+    // 创建WiFi管理器模拟实例
+    WiFiManager wifiManager;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device, &tcpProtocol);
+    Heartbeat heartbeat(&device, &tcpProtocol, &wifiManager);
     
     // 检查初始状态
     ASSERT_EQUAL(HEARTBEAT_DISCONNECTED, heartbeat.getStatus());
@@ -47,8 +53,11 @@ TEST(HeartbeatTimeout) {
     // 创建TCP协议模拟实例
     TCPProtocol tcpProtocol;
     
+    // 创建WiFi管理器模拟实例
+    WiFiManager wifiManager;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device, &tcpProtocol);
+    Heartbeat heartbeat(&device, &tcpProtocol, &wifiManager);
     
     // 初始状态应该是未超时
     // 注意：由于isTimeout()依赖于时间，我们无法在测试中准确模拟
@@ -66,8 +75,11 @@ TEST(HeartbeatReconnect) {
     // 创建TCP协议模拟实例
     TCPProtocol tcpProtocol;
     
+    // 创建WiFi管理器模拟实例
+    WiFiManager wifiManager;
+    
     // 创建心跳检测实例
-    Heartbeat heartbeat(&device, &tcpProtocol);
+    Heartbeat heartbeat(&device, &tcpProtocol, &wifiManager);
     
     // 测试重新连接功能
     // 注意：这个测试可能需要实际的网络连接或模拟网络环境
