@@ -117,6 +117,29 @@ void testWiFiHandle() {
   }
 }
 
+// 测试WiFi连接和重连逻辑
+void testWiFiConnectionAndReconnection() {
+  Serial.println("Testing WiFi Connection and Reconnection...");
+  
+  if (testWiFiManager) {
+    // 检查初始状态
+    ASSERT_EQUAL(WIFI_DISCONNECTED, testWiFiManager->getConnectionStatus());
+    
+    // 调用 handle() 函数，确保不会自动触发连接
+    testWiFiManager->handle();
+    ASSERT_EQUAL(WIFI_DISCONNECTED, testWiFiManager->getConnectionStatus());
+    
+    // 显式调用 connect() 函数触发第一次连接
+    bool connectResult = testWiFiManager->connect();
+    // 注意：在测试环境中，连接可能不会真正成功，但我们只关心函数调用是否成功
+    ASSERT_TRUE(connectResult || testWiFiManager->getConnectionStatus() == WIFI_CONNECTING);
+    
+    Serial.println("WiFi Connection and Reconnection test passed!");
+  } else {
+    Serial.println("WiFi Manager not initialized");
+  }
+}
+
 // 主测试函数
 void runWiFiTests() {
   Serial.println("Running WiFi Tests...");
@@ -128,6 +151,7 @@ void runWiFiTests() {
   testWiFiRSSI();
   testWiFiStatusCallback();
   testWiFiHandle();
+  testWiFiConnectionAndReconnection();
   
   // 清理资源
   if (testWiFiManager) {

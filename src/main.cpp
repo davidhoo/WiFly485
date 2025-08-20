@@ -89,6 +89,10 @@ void setup()
   // 注册WiFi连接状态回调函数
   wifiManager.setConnectionStatusCallback(onWiFiConnectionStatusChanged);
   
+  // 触发第一次WiFi连接
+  LOG_I("Main", "触发第一次WiFi连接");
+  wifiManager.connect();
+  
   LOG_I("Main", "主程序初始化完成");
   Serial.println("=== 主程序初始化完成 ===");
 }
