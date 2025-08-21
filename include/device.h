@@ -39,6 +39,7 @@ public:
   
   // 设置设备名称
   void setName(const String& name);
+  
 
 private:
   DeviceRole role;

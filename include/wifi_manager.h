@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
-#include "config_manager.h"
 #include "device.h"
 
 // WiFi连接状态枚举
@@ -21,17 +20,11 @@ public:
   ~WiFiManager();
 
   // 初始化WiFi管理器
-  bool begin(ConfigManager* configManager, Device* device);
+  bool begin(Device* device);
 
   // 连接到WiFi网络
   bool connect();
 
-  // 启动AP模式
-  bool startAP();
-  
-  // 连接到指定的路由器WiFi
-  bool connectToRouterWiFi();
-  
   // 发送HTTP请求到http://1.1.1.1并输出返回的内容
   void sendHTTPRequest();
 
@@ -51,6 +44,8 @@ public:
   int32_t getRSSI();
 
   // 处理WiFi事件
+  // 注意：此函数不再自动触发第一次连接，第一次连接需要外部显式调用 connect() 函数
+  // 此函数只处理连接超时和重连逻辑
   void handle();
 
   // 设置连接状态回调函数
@@ -58,23 +53,15 @@ public:
   void setConnectionStatusCallback(ConnectionStatusCallback callback);
 
 private:
-  ConfigManager* configManager;
   Device* device;
   
   WiFiConnectionStatus connectionStatus;
   unsigned long lastConnectionAttempt;
   unsigned long connectionStartTime;
-  bool apModeEnabled;
   
   // 重试相关变量
   unsigned int retryCount;
   unsigned long currentReconnectInterval;
-  
-  // 超时跟踪变量
-  unsigned long masterStartTime;
-  bool masterTimeoutChecked;
-  unsigned long slaveStartTime;
-  bool slaveTimeoutChecked;
   
   ConnectionStatusCallback statusCallback;
   
@@ -83,16 +70,13 @@ private:
   
   // 内部辅助函数
   void setupStationMode();
-  void setupAPMode();
   void onWiFiEvent(WiFiEvent_t event);
   void updateConnectionStatus(WiFiConnectionStatus status);
   bool isConnectionTimedOut();
-  void checkDeviceTimeout();
   
   // 重连相关
   static const unsigned long RECONNECT_INTERVAL = 30000; // 30秒重连间隔
   static const unsigned long CONNECTION_TIMEOUT = 15000; // 15秒连接超时
-  static const unsigned long APMODE_CONNECTION_TIMEOUT = 6000; // 60秒主设备连接超时
 };
 
 #endif // WIFI_MANAGER_H

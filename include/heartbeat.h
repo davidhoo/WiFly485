@@ -6,13 +6,19 @@
 #include "device.h"
 #include "logger.h"
 
+// 前向声明
+class TCPProtocol;
+class WiFiManager;
+
 // 心跳包发送间隔（毫秒）
 #define HEARTBEAT_INTERVAL 5000
 
 // 连接超时时间（毫秒）
 #define HEARTBEAT_TIMEOUT 15000
 
-// 心跳检测状态
+// 心跳包类型标识
+#define HEARTBEAT_PACKET_TYPE 0xFF01
+
 // 心跳检测状态
 enum HeartbeatStatus {
     HEARTBEAT_DISCONNECTED,     // 未连接
@@ -21,7 +27,7 @@ enum HeartbeatStatus {
 };
 class Heartbeat {
 public:
-    Heartbeat(Device* device);
+    Heartbeat(Device* device, TCPProtocol* tcpProtocol, WiFiManager* wifiManager);
     ~Heartbeat();
 
     // 初始化心跳检测
@@ -50,11 +56,12 @@ public:
 
 private:
     Device* _device;
+    TCPProtocol* _tcpProtocol;
+    WiFiManager* _wifiManager;
     HeartbeatStatus _status;
     unsigned long _lastHeartbeatTime;
     unsigned long _lastReceivedTime;
-    WiFiClient* _client;
-    WiFiServer* _server;
+    bool _canStart;  // 标记是否可以开始心跳检测
 };
 
 #endif // HEARTBEAT_H

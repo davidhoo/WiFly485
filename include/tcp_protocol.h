@@ -8,6 +8,10 @@
 #include "device.h"
 #include "rs485.h"
 #include "mdns_service.h"
+#include "config.h"
+
+// 前向声明
+class Heartbeat;
 
 // TCP连接状态枚举
 enum TCPConnectionStatus {
@@ -48,50 +52,58 @@ bool begin(Device* device, RS485* rs485, MDNSService* mdnsService);  // 修改�
 
   // 获取连接状态字符串
   String getConnectionStatusString();
-
+  
   // 设置连接状态回调函数
   typedef void (*ConnectionStatusCallback)(TCPConnectionStatus status);
   void setConnectionStatusCallback(ConnectionStatusCallback callback);
-private:
-  Device* device;
-  RS485* rs485;
-  MDNSService* mdnsService;  // 添加mDNS服务指针
   
-  WiFiServer* server;
-  WiFiClient client;
-  
-  TCPConnectionStatus connectionStatus;
-  unsigned long lastConnectionAttempt;
-  unsigned long connectionStartTime;
-  
-  ConnectionStatusCallback statusCallback;
-  
-  // 接收缓冲区
-  static const size_t RECEIVE_BUFFER_SIZE = 512;
-  uint8_t receiveBuffer[RECEIVE_BUFFER_SIZE];
-  size_t receiveBufferIndex;
-  
-  // 发送缓冲区
-  static const size_t SEND_BUFFER_SIZE = 512;
-  uint8_t sendBuffer[SEND_BUFFER_SIZE];
-  
-  // 包相关常量
-  static const uint16_t PACKET_HEADER_SIZE = sizeof(PacketHeader);
-  static const unsigned long CONNECTION_TIMEOUT = 15000; // 15秒连接超时
-  static const unsigned long RECONNECT_INTERVAL = 30000; // 30秒重连间隔
-  static const uint16_t MAX_PACKET_SIZE = 512;
-  
-  // 内部辅助函数
-  void updateConnectionStatus(TCPConnectionStatus status);
-  bool isConnectionTimedOut();
-  uint16_t calculateChecksum(const uint8_t* data, size_t length);
-  bool sendPacket(const uint8_t* data, size_t length);
-  int receivePacket(uint8_t* buffer, size_t bufferSize);
-  void handleServer();
-  void handleClient();
-  bool connectToMaster();
-  bool discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort);  // 添加发现主设备IP的函数声明
-};
+  // 设置心跳模块
+  void setHeartbeat(Heartbeat* heartbeat);
 
+private:
+Device* device;
+RS485* rs485;
+MDNSService* mdnsService;  // 添加mDNS服务指针
+Heartbeat* heartbeat;      // 添加心跳模块指针
+
+WiFiServer* server;
+WiFiClient client;
+
+TCPConnectionStatus connectionStatus;
+unsigned long lastConnectionAttempt;
+unsigned long connectionStartTime;
+
+ConnectionStatusCallback statusCallback;
+
+// 接收缓冲区
+static const size_t RECEIVE_BUFFER_SIZE = 512;
+uint8_t receiveBuffer[RECEIVE_BUFFER_SIZE];
+size_t receiveBufferIndex;
+
+// 发送缓冲区
+static const size_t SEND_BUFFER_SIZE = 512;
+uint8_t sendBuffer[SEND_BUFFER_SIZE];
+
+// 包相关常量
+static const uint16_t PACKET_HEADER_SIZE = sizeof(PacketHeader);
+static const unsigned long CONNECTION_TIMEOUT = 15000; // 15秒连接超时
+static const unsigned long RECONNECT_INTERVAL = 30000; // 30秒重连间隔
+static const uint16_t MAX_PACKET_SIZE = 512;
+
+// 内部辅助函数
+void updateConnectionStatus(TCPConnectionStatus status);
+bool isConnectionTimedOut();
+uint16_t calculateChecksum(const uint8_t* data, size_t length);
+bool sendPacket(const uint8_t* data, size_t length);
+int receivePacket(uint8_t* buffer, size_t bufferSize);
+void handleServer();
+void handleClient();
+bool connectToMaster();
+bool discoverMasterIP(IPAddress& masterIP, uint16_t& masterPort);  // 添加发现主设备IP的函数声明
+
+// 心跳包处理函数
+bool isHeartbeatPacket(const uint8_t* data, size_t length);
+void handleHeartbeatPacket(const uint8_t* data, size_t length);
+};
 
 #endif // TCP_PROTOCOL_H
