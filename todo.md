@@ -256,16 +256,11 @@
   
   **输出文件**:
   - `src/tests/test_runner.cpp`
-  - `include/test_framework.h`
-  - `src/test_framework.cpp`
 
 - [x] **测试验证**: 测试框架验证
   - 测试运行器功能测试
   - 串口交互测试
   - 测试结果格式验证
-  
-  **输出文件**:
-  - `src/test_framework.cpp`
 
 ### 目标13：集成测试
 - [x] **功能实现**: 集成测试
