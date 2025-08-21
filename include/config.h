@@ -12,8 +12,10 @@
 // #define DEFAULT_PASSWORD "urtheone"
 // #define DEFAULT_SSID "胡子的理想L7"
 // #define DEFAULT_PASSWORD "qudfimakmge9242"
-#define DEFAULT_SSID "David的iPhone"
-#define DEFAULT_PASSWORD "11111111"
+// #define DEFAULT_SSID "David的iPhone"
+// #define DEFAULT_PASSWORD "11111111"
+#define DEFAULT_SSID "david-bj"
+#define DEFAULT_PASSWORD "xiaopang800323"
 
 // RS485配置默认值
 #define DEFAULT_BAUD_RATE 9600
