@@ -54,11 +54,6 @@ void Device::setName(const String& name) {
   this->name = name;
 }
 
-String Device::getMasterIP() {
-  // IP地址通过mDNS服务动态获取，不使用静态定义的默认值
-  return "";
-}
-
 void Device::initializeRole() {
   // 根据编译时定义的宏来确定设备角色
 #ifdef DEVICE_ROLE_MASTER
