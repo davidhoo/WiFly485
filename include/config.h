@@ -8,8 +8,12 @@
 #define DEVICE_ROLE_SLAVE_STR  "slave"
 
 // 网络配置默认值
-#define DEFAULT_SSID "Sina Plaza Office"
-#define DEFAULT_PASSWORD "urtheone"
+// #define DEFAULT_SSID "Sina Plaza Office"
+// #define DEFAULT_PASSWORD "urtheone"
+// #define DEFAULT_SSID "胡子的理想L7"
+// #define DEFAULT_PASSWORD "qudfimakmge9242"
+#define DEFAULT_SSID "David的iPhone"
+#define DEFAULT_PASSWORD "11111111"
 
 // RS485配置默认值
 #define DEFAULT_BAUD_RATE 9600
@@ -23,6 +27,14 @@
 #define DEFAULT_MASTER_TCP_PORT 8888
 
 // 系统配置
+// TCP缓冲区配置
+#define TCP_RECEIVE_BUFFER_SIZE 1024  // 增加接收缓冲区大小
+#define TCP_MAX_PACKET_SIZE 1024      // 增加最大数据包大小
+#define TCP_RECEIVE_TIMEOUT 2000      // 接收超时时间(毫秒)
+
+// 心跳配置优化
+#define HEARTBEAT_SEND_INTERVAL 3000  // 心跳发送间隔(毫秒)
+#define HEARTBEAT_RECEIVE_TIMEOUT 10000 // 心跳接收超时(毫秒)
 
 // LED配置
 #define LED_PIN 2  // GPIO2作为LED引脚
