@@ -393,8 +393,8 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
     // 对于小数据包（如心跳包），尝试多次等待数据到达
     if (header.length <= 16) {
       int retryCount = 0;
-      const int maxRetries = 10; // 重试次数
-      const int retryDelay = 20; // 延迟时间调整为20ms
+      const int maxRetries = 10; // 心跳包最多重试10次
+      const int retryDelay = 20; // 每次重试延迟20ms
       
       LOG_D("TCPProtocol", "Small packet detected (length: %d), starting retry mechanism", header.length);
       
@@ -402,11 +402,11 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
         delay(retryDelay);
         retryCount++;
         availableBytes = client.available();
-        LOG_D("TCPProtocol", "Retry %d/%d: available data: %d (need: %d)", retryCount, maxRetries, availableBytes, header.length);
+        LOG_D("TCPProtocol", "Heartbeat packet retry %d/%d: available data: %d (need: %d)", retryCount, maxRetries, availableBytes, header.length);
         
         // 如果数据已经足够，跳出循环
         if (availableBytes >= header.length) {
-          LOG_I("TCPProtocol", "Complete data arrived after %d retries", retryCount);
+          LOG_I("TCPProtocol", "Heartbeat packet complete data arrived after %d retries", retryCount);
           break;
         }
       }
