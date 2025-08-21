@@ -10,12 +10,6 @@
 class TCPProtocol;
 class WiFiManager;
 
-// 心跳包发送间隔（毫秒）
-#define HEARTBEAT_INTERVAL 5000
-
-// 连接超时时间（毫秒）
-#define HEARTBEAT_TIMEOUT 15000
-
 // 心跳包类型标识
 #define HEARTBEAT_PACKET_TYPE 0xFF01
 
@@ -53,6 +47,9 @@ public:
     
     // 尝试重新连接
     bool reconnect();
+    
+    // 更新最后接收时间（用于通知连接活跃）
+    void updateLastReceivedTime();
 
 private:
     Device* _device;

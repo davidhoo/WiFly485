@@ -117,7 +117,8 @@ void WiFiManager::handle() {
   if (connectionStatus == WIFI_CONNECTING) {
     // 检查连接是否超时
     if (isConnectionTimedOut()) {
-      LOG_E("WiFiManager", "Connection timeout");
+      LOG_E("WiFiManager", "Connection timeout, connection start time: %lu, current time: %lu, timeout: %lu",
+            connectionStartTime, millis(), CONNECTION_TIMEOUT);
       updateConnectionStatus(WIFI_CONNECTION_FAILED);
       WiFi.disconnect();
     }
@@ -131,6 +132,8 @@ void WiFiManager::handle() {
     // 尝试重连（处理断开连接和连接失败的情况）
     unsigned long currentTime = millis();
     if (currentTime - lastConnectionAttempt > expectedReconnectInterval) {
+      LOG_I("WiFiManager", "Attempting to reconnect, last attempt: %lu, current time: %lu, interval: %lu, retry count: %d",
+            lastConnectionAttempt, currentTime, expectedReconnectInterval, retryCount);
       lastConnectionAttempt = currentTime;
       retryCount++;
       
@@ -183,6 +186,11 @@ void WiFiManager::onWiFiEvent(WiFiEvent_t event) {
 
 void WiFiManager::updateConnectionStatus(WiFiConnectionStatus status) {
   if (connectionStatus != status) {
+    LOG_I("WiFiManager", "Connection status changing from %s to %s", getConnectionStatusString().c_str(),
+          (status == WIFI_DISCONNECTED ? "Disconnected" :
+           status == WIFI_CONNECTING ? "Connecting" :
+           status == WIFI_CONNECTED ? "Connected" :
+           status == WIFI_CONNECTION_FAILED ? "Connection Failed" : "Unknown"));
     connectionStatus = status;
     
     // 如果连接成功，重置重试计数和重连间隔

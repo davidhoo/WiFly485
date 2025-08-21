@@ -106,9 +106,22 @@ void setup()
   LOG_I("Main", "主程序初始化完成");
   LOG_I("Main", "=== 主程序初始化完成 ===");
 }
-
 void loop()
 {
+  static unsigned long lastLogTime = 0;
+  unsigned long currentTime = millis();
+  
+  // 每5秒记录一次系统状态
+  if (currentTime - lastLogTime > 5000) {
+    LOG_D("Main", "System status - WiFi: %s, TCP: %s, Heartbeat: %s",
+          wifiManager.getConnectionStatusString().c_str(),
+          tcpProtocol.getConnectionStatusString().c_str(),
+          (heartbeat.getStatus() == HEARTBEAT_DISCONNECTED ? "Disconnected" :
+           heartbeat.getStatus() == HEARTBEAT_CONNECTED ? "Connected" :
+           heartbeat.getStatus() == HEARTBEAT_STATUS_TIMEOUT ? "Timeout" : "Unknown"));
+    lastLogTime = currentTime;
+  }
+  
   // 处理WiFi连接
   wifiManager.handle();
   
