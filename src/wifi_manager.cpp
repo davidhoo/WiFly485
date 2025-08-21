@@ -142,7 +142,6 @@ void WiFiManager::handle() {
       LOG_I("WiFiManager", "Reconnect attempt %d, next interval %lu ms",
                     retryCount, currentReconnectInterval);
       connect();
-      connect();
     }
   }
   // 注意：第一次连接需要外部显式调用 connect() 函数，不会在 handle() 中立即触发
