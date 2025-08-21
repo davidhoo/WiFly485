@@ -393,8 +393,8 @@ int TCPProtocol::receivePacket(uint8_t* buffer, size_t bufferSize) {
     // 对于小数据包（如心跳包），尝试多次等待数据到达
     if (header.length <= 16) {
       int retryCount = 0;
-      const int maxRetries = 10; // 增加重试次数
-      const int retryDelay = 10; // 增加延迟时间
+      const int maxRetries = 10; // 重试次数
+      const int retryDelay = 20; // 延迟时间调整为20ms
       
       LOG_D("TCPProtocol", "Small packet detected (length: %d), starting retry mechanism", header.length);
       

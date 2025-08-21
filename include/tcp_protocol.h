@@ -76,19 +76,25 @@ unsigned long connectionStartTime;
 ConnectionStatusCallback statusCallback;
 
 // 接收缓冲区
-static const size_t RECEIVE_BUFFER_SIZE = 512;
+static const size_t RECEIVE_BUFFER_SIZE = 1024;
 uint8_t receiveBuffer[RECEIVE_BUFFER_SIZE];
 size_t receiveBufferIndex;
 
+// 不完整数据包缓冲区
+static const size_t INCOMPLETE_PACKET_BUFFER_SIZE = 1024;
+uint8_t incompletePacketBuffer[INCOMPLETE_PACKET_BUFFER_SIZE];
+size_t incompletePacketSize;
+PacketHeader incompletePacketHeader;
+
 // 发送缓冲区
-static const size_t SEND_BUFFER_SIZE = 512;
+static const size_t SEND_BUFFER_SIZE = 1024;
 uint8_t sendBuffer[SEND_BUFFER_SIZE];
 
 // 包相关常量
 static const uint16_t PACKET_HEADER_SIZE = sizeof(PacketHeader);
 static const unsigned long CONNECTION_TIMEOUT = 15000; // 15秒连接超时
 static const unsigned long RECONNECT_INTERVAL = 30000; // 30秒重连间隔
-static const uint16_t MAX_PACKET_SIZE = 512;
+static const uint16_t MAX_PACKET_SIZE = 1024;
 
 // 内部辅助函数
 void updateConnectionStatus(TCPConnectionStatus status);
