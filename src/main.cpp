@@ -4,8 +4,6 @@
 #include "wifi_manager.h"
 #include "mdns_service.h"
 #include "rs485.h"
-#include "tcp_protocol.h"
-#include "heartbeat.h"
 #include "led_indicator.h"
 #include "error_handler.h"
 
@@ -14,8 +12,6 @@ Device device;
 WiFiManager wifiManager;
 MDNSService mdnsService;
 RS485 rs485;
-TCPProtocol tcpProtocol;
-Heartbeat heartbeat(&device, &tcpProtocol, &wifiManager);  // 添加心跳模块
 LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
 LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
 LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
@@ -76,21 +72,7 @@ void setup()
   
   LOG_I("Main", "RS485初始化成功，波特率: %d", DEFAULT_BAUD_RATE);
   
-  // 初始化TCP协议
-  if (!tcpProtocol.begin(&device, &rs485, &mdnsService)) {  // 修改函数调用，传递mDNS服务实例
-    LOG_E("Main", "TCP协议初始化失败");
-    return;
-  }
   
-  LOG_I("Main", "TCP协议初始化成功");
-  
-  // 将心跳模块设置到TCP协议中
-  tcpProtocol.setHeartbeat(&heartbeat);
-  
-  // 初始化心跳模块
-  heartbeat.begin();
-  
-  LOG_I("Main", "心跳模块初始化成功");
   
   // 初始化LED指示器
   ledIndicator.begin();
@@ -112,35 +94,25 @@ void loop()
   unsigned long currentTime = millis();
   
   // 每5秒记录一次系统状态
+  // 每5秒记录一次系统状态
   if (currentTime - lastLogTime > 5000) {
-    LOG_D("Main", "System status - WiFi: %s, TCP: %s, Heartbeat: %s",
-          wifiManager.getConnectionStatusString().c_str(),
-          tcpProtocol.getConnectionStatusString().c_str(),
-          (heartbeat.getStatus() == HEARTBEAT_DISCONNECTED ? "Disconnected" :
-           heartbeat.getStatus() == HEARTBEAT_CONNECTED ? "Connected" :
-           heartbeat.getStatus() == HEARTBEAT_STATUS_TIMEOUT ? "Timeout" : "Unknown"));
+    LOG_D("Main", "System status - WiFi: %s",
+          wifiManager.getConnectionStatusString().c_str());
     lastLogTime = currentTime;
   }
-  
   // 处理WiFi连接
   wifiManager.handle();
   
   // 处理mDNS服务
   mdnsService.handle();
   
-  // 处理TCP协议
-  tcpProtocol.handle();
   
-  // 处理心跳模块
-  heartbeat.handle();
   
   // 根据设备状态更新LED指示器
   // 根据设备状态更新LED指示器
   if (device.isMaster()) {
     // 主设备状态指示
     if (wifiManager.getConnectionStatus() == WIFI_CONNECTED) {
-      if (tcpProtocol.getConnectionStatus() == TCP_CONNECTED) {
-        // 已连接到从设备
         // 检查是否有RS485数据传输，如果有则使用呼吸模式
         if (rs485.available()) {
           if (ledIndicator.getCurrentState() != LEDState::BREATHING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
@@ -151,12 +123,6 @@ void loop()
             ledIndicator.setState(LEDState::CONNECTED, LEDPriority::PRIORITY_NORMAL);
           }
         }
-      } else {
-        // WiFi已连接，但未连接到从设备（主从连接中）
-        if (ledIndicator.getCurrentState() != LEDState::CONNECTING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
-          ledIndicator.setState(LEDState::CONNECTING, LEDPriority::PRIORITY_HIGH);
-        }
-      }
     } else {
       // WiFi未连接
       if (wifiManager.getConnectionStatus() == WIFI_CONNECTING) {
@@ -174,8 +140,6 @@ void loop()
   } else {
     // 从设备状态指示
     if (wifiManager.getConnectionStatus() == WIFI_CONNECTED) {
-      if (tcpProtocol.getConnectionStatus() == TCP_CONNECTED) {
-        // 已连接到主设备
         // 检查是否有RS485数据传输，如果有则使用呼吸模式
         if (rs485.available()) {
           if (ledIndicator.getCurrentState() != LEDState::BREATHING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
@@ -186,12 +150,6 @@ void loop()
             ledIndicator.setState(LEDState::CONNECTED, LEDPriority::PRIORITY_NORMAL);
           }
         }
-      } else {
-        // WiFi已连接，但未连接到主设备（主从连接中）
-        if (ledIndicator.getCurrentState() != LEDState::CONNECTING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
-          ledIndicator.setState(LEDState::CONNECTING, LEDPriority::PRIORITY_HIGH);
-        }
-      }
     } else {
       // WiFi未连接
       if (wifiManager.getConnectionStatus() == WIFI_CONNECTING) {

@@ -97,7 +97,6 @@ private:
     void updateBlinkSlow();
     void updateBlinkFast();
     void updateBreathing();
-    void updateHeartbeat();
     void updateError();
     void updateConnecting();
     void updateConnected();
