@@ -6,15 +6,26 @@
 #include "rs485.h"
 #include "led_indicator.h"
 #include "error_handler.h"
+#include "tcp_server.h"
+#include "tcp_client.h"
 
 // 全局变量
 Device device;
 WiFiManager wifiManager;
 MDNSService mdnsService;
 RS485 rs485;
+TCPServer tcpServer;
+TCPClient tcpClient;
 LEDPriority ledPriority = LEDPriority::PRIORITY_LOW;
 LEDPriority previousPriority = LEDPriority::PRIORITY_LOW;
 LEDIndicator ledIndicator(LED_PIN); // 使用GPIO2作为LED引脚
+
+// 从设备连接状态
+bool masterDiscovered = false;
+String masterIP = "";
+uint16_t masterPort = 0;
+unsigned long lastMasterDiscovery = 0;
+const unsigned long MASTER_DISCOVERY_INTERVAL = 10000; // 10秒间隔重新发现主设备
 
 // 错误处理器
 extern ErrorHandler errorHandler;
@@ -71,9 +82,24 @@ void setup()
   }
   
   LOG_I("Main", "RS485初始化成功，波特率: %d", DEFAULT_BAUD_RATE);
+  // 初始化TCP服务器（仅主设备）
+  if (device.isMaster()) {
+    if (!tcpServer.begin(&device, &rs485)) {
+      LOG_E("Main", "TCP服务器初始化失败");
+      return;
+    }
+    LOG_I("Main", "TCP服务器初始化成功，端口: %d", tcpServer.getPort());
+  }
   
-  
-  
+  // 初始化TCP客户端（仅从设备）
+  if (device.isSlave()) {
+    if (!tcpClient.begin(&device, &rs485)) {
+      LOG_E("Main", "TCP客户端初始化失败");
+      return;
+    }
+    LOG_I("Main", "TCP客户端初始化成功");
+  }
+
   // 初始化LED指示器
   ledIndicator.begin();
   ledIndicator.setState(LEDState::OFF, LEDPriority::PRIORITY_LOW);
@@ -106,8 +132,51 @@ void loop()
   // 处理mDNS服务
   mdnsService.handle();
   
+  // 处理TCP服务器（仅主设备）
+  if (device.isMaster()) {
+    tcpServer.handle();
+  }
   
-  
+  // 处理TCP客户端和主设备发现（仅从设备）
+  if (device.isSlave()) {
+    // 处理TCP客户端连接
+    tcpClient.handle();
+    
+    // 如果WiFi已连接但TCP客户端未连接，尝试发现并连接主设备
+    if (wifiManager.getConnectionStatus() == WIFI_CONNECTED &&
+        !tcpClient.isConnected()) {
+      
+      // 定期尝试发现主设备
+      if (currentTime - lastMasterDiscovery >= MASTER_DISCOVERY_INTERVAL) {
+        lastMasterDiscovery = currentTime;
+        
+        LOG_I("Main", "Attempting to discover master device...");
+        String discoveredMasterIP;
+        uint16_t discoveredMasterPort;
+        
+        if (mdnsService.discoverMaster(discoveredMasterIP, discoveredMasterPort)) {
+          // 发现主设备成功
+          masterDiscovered = true;
+          masterIP = discoveredMasterIP;
+          masterPort = discoveredMasterPort;
+          
+          LOG_I("Main", "Master device discovered at %s:%d",
+                masterIP.c_str(), masterPort);
+          
+          // 尝试连接到主设备
+          if (tcpClient.connect(masterIP, masterPort)) {
+            LOG_I("Main", "Successfully connected to master device");
+          } else {
+            LOG_W("Main", "Failed to connect to master device");
+          }
+        } else {
+          LOG_W("Main", "No master device found");
+          masterDiscovered = false;
+        }
+      }
+    }
+  }
+
   // 根据设备状态更新LED指示器
   // 根据设备状态更新LED指示器
   if (device.isMaster()) {
@@ -140,6 +209,8 @@ void loop()
   } else {
     // 从设备状态指示
     if (wifiManager.getConnectionStatus() == WIFI_CONNECTED) {
+      if (tcpClient.isConnected()) {
+        // TCP已连接到主设备
         // 检查是否有RS485数据传输，如果有则使用呼吸模式
         if (rs485.available()) {
           if (ledIndicator.getCurrentState() != LEDState::BREATHING || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_HIGH) {
@@ -150,6 +221,12 @@ void loop()
             ledIndicator.setState(LEDState::CONNECTED, LEDPriority::PRIORITY_NORMAL);
           }
         }
+      } else {
+        // WiFi已连接但TCP未连接到主设备，使用慢闪烁表示正在寻找主设备
+        if (ledIndicator.getCurrentState() != LEDState::BLINK_SLOW || ledIndicator.getCurrentPriority() != LEDPriority::PRIORITY_NORMAL) {
+          ledIndicator.setState(LEDState::BLINK_SLOW, LEDPriority::PRIORITY_NORMAL);
+        }
+      }
     } else {
       // WiFi未连接
       if (wifiManager.getConnectionStatus() == WIFI_CONNECTING) {
@@ -182,6 +259,30 @@ void onWiFiConnectionStatusChanged(WiFiConnectionStatus status) {
       LOG_I("Main", "mDNS service started successfully");
     } else {
       LOG_E("Main", "Failed to start mDNS service");
+    }
+    
+    // 主设备在WiFi连接成功后启动TCP服务器
+    if (device.isMaster()) {
+      LOG_I("Main", "WiFi connected, starting TCP server...");
+      if (tcpServer.start()) {
+        LOG_I("Main", "TCP server started successfully on port %d", tcpServer.getPort());
+      } else {
+        LOG_E("Main", "Failed to start TCP server");
+      }
+    }
+    
+    // 从设备在WiFi连接成功后立即尝试发现并连接主设备
+    if (device.isSlave()) {
+      LOG_I("Main", "WiFi connected, attempting to discover and connect to master...");
+      // 重置发现时间，让主循环立即尝试发现主设备
+      lastMasterDiscovery = 0;
+    }
+  } else if (status == WIFI_DISCONNECTED) {
+    // WiFi断开时，从设备断开TCP连接
+    if (device.isSlave() && tcpClient.isConnected()) {
+      LOG_I("Main", "WiFi disconnected, disconnecting from master...");
+      tcpClient.disconnect();
+      masterDiscovered = false;
     }
   }
 }
