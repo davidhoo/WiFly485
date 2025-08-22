@@ -122,8 +122,15 @@ void loop()
   // 每5秒记录一次系统状态
   // 每5秒记录一次系统状态
   if (currentTime - lastLogTime > 5000) {
-    LOG_D("Main", "System status - WiFi: %s",
-          wifiManager.getConnectionStatusString().c_str());
+    if (device.isMaster()) {
+      LOG_D("Main", "System status - WiFi: %s, TCP Server: %s",
+            wifiManager.getConnectionStatusString().c_str(),
+            tcpServer.getStatusString().c_str());
+    } else {
+      LOG_D("Main", "System status - WiFi: %s, TCP Client: %s",
+            wifiManager.getConnectionStatusString().c_str(),
+            tcpClient.getStatusString().c_str());
+    }
     lastLogTime = currentTime;
   }
   // 处理WiFi连接
