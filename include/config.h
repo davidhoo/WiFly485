@@ -34,6 +34,13 @@
 #define TCP_MAX_PACKET_SIZE 1024      // 增加最大数据包大小
 #define TCP_RECEIVE_TIMEOUT 2000      // 接收超时时间(毫秒)
 
+// TCP客户端配置
+#define TCP_DISCOVERY_INTERVAL 5000      // mDNS发现间隔(毫秒)
+#define TCP_CONNECTION_TIMEOUT 10000     // 连接超时时间(毫秒)
+#define TCP_HEARTBEAT_INTERVAL 30000     // 心跳间隔(毫秒)
+#define TCP_MAX_RETRY_COUNT 3            // 最大重试次数
+#define TCP_RETRY_DELAY 2000             // 重试延迟(毫秒)
+
 // LED配置
 #define LED_PIN 2  // GPIO2作为LED引脚
 
