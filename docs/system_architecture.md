@@ -55,7 +55,6 @@ graph TD
         Logger[日志系统]
         LEDIndicator[LED指示器]
         ErrorHandler[错误处理器]
-        Heartbeat[心跳检测]
     end
     
     Main --> DeviceManager
@@ -77,7 +76,6 @@ graph TD
     DeviceManager --> Logger
     DeviceManager --> LEDIndicator
     DeviceManager --> ErrorHandler
-    DeviceManager --> Heartbeat
 ```
 
 ## 3. 数据流架构
