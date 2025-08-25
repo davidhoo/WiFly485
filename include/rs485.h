@@ -2,12 +2,14 @@
 #define RS485_H
 
 #include <Arduino.h>
+#include <SoftwareSerial.h>
+#include "config.h"
 #include <queue>
 
 class RS485 {
 public:
     // 构造函数，初始化引脚配置
-    RS485(uint8_t rtsPin = 4, uint8_t rxPin = 1, uint8_t txPin = 3);
+    RS485(uint8_t rtsPin = RS485_RTS_PIN, uint8_t rxPin = RS485_RX_PIN, uint8_t txPin = RS485_TX_PIN);
     
     // 初始化RS485通信
     bool begin(unsigned long baudRate = 9600);
@@ -38,6 +40,9 @@ private:
     uint8_t _rxPin;
     uint8_t _txPin;
     unsigned long _baudRate;
+    
+    // SoftwareSerial对象
+    SoftwareSerial _serial;
     
     // 错误状态标志
     uint8_t _errorStatus;

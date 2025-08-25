@@ -3,10 +3,10 @@
 #include "error_handler.h"
 
 // 构造函数，初始化引脚配置
-RS485::RS485(uint8_t rtsPin, uint8_t rxPin, uint8_t txPin) 
-    : _rtsPin(rtsPin), _rxPin(rxPin), _txPin(txPin), _baudRate(9600), _errorStatus(ERROR_NONE) {
+// 构造函数，初始化引脚配置
+RS485::RS485(uint8_t rtsPin, uint8_t rxPin, uint8_t txPin)
+    : _rtsPin(rtsPin), _rxPin(rxPin), _txPin(txPin), _serial(_rxPin, _txPin), _baudRate(9600), _errorStatus(ERROR_NONE) {
 }
-
 // 初始化RS485通信
 bool RS485::begin(unsigned long baudRate) {
     _baudRate = baudRate;
@@ -16,9 +16,8 @@ bool RS485::begin(unsigned long baudRate) {
     // 默认设置为接收模式
     setDirection(false);
     
-    // 初始化串口通信，使用Serial1而不是Serial
-    // 这样可以避免与测试运行器使用的Serial冲突
-    Serial1.begin(_baudRate);
+    // 初始化串口通信
+    _serial.begin(_baudRate);
     
     return true;
 }
@@ -38,10 +37,10 @@ bool RS485::send(const uint8_t* data, size_t length) {
     delay(1);
     
     // 发送数据
-    size_t sent = Serial1.write(data, length);
+    size_t sent = _serial.write(data, length);
     
     // 等待发送完成
-    Serial1.flush();
+    _serial.flush();
     
     // 切换回接收模式
     setDirection(false);
@@ -67,23 +66,23 @@ int RS485::receive(uint8_t* buffer, size_t bufferSize) {
     size_t bytesRead = 0;
     
     // 从串口读取数据
-    while (Serial1.available() && bytesRead < bufferSize) {
-        buffer[bytesRead] = Serial1.read();
+    // 从串口读取数据
+    while (_serial.available() && bytesRead < bufferSize) {
+        buffer[bytesRead] = _serial.read();
         bytesRead++;
     }
     
     // 如果缓冲区满了但还有数据，标记缓冲区溢出错误
-    if (Serial1.available() && bytesRead == bufferSize) {
+    if (_serial.available() && bytesRead == bufferSize) {
         _errorStatus |= ERROR_BUFFER_OVERFLOW;
         REPORT_ERROR(ERROR_RS485_BUFFER_OVERFLOW, "RS485", "Receive buffer overflow");
     }
-    
     return bytesRead;
 }
 
 // 检查是否有数据可读
 bool RS485::available() {
-    return Serial1.available() > 0;
+    return _serial.available() > 0;
 }
 
 // 设置通信方向（true为发送，false为接收）

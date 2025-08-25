@@ -23,6 +23,11 @@
 #define DEFAULT_PARITY 0  // 0: None, 1: Odd, 2: Even
 #define DEFAULT_STOP_BITS 1
 
+// RS485引脚定义
+#define RS485_RTS_PIN 13  // GPIO13作为RTS(RST)引脚
+#define RS485_RX_PIN  14  // GPIO14作为RX引脚
+#define RS485_TX_PIN  12  // GPIO12作为TX引脚
+
 // 设备配置默认值
 #define DEFAULT_MASTER_NAME "WiFly485_Master"
 #define DEFAULT_SLAVE_NAME "WiFly485_Slave"
